@@ -20,7 +20,7 @@
 
 <hr>
 <div align="center">
-<p style="text-align: center;">MM-Eureka: Exploring Visual Aha Moment with Rule-based Large-scale Reinforcement Learning<p>
+<p style="text-align: center;">MM-EUREKA: Exploring Visual Aha Moment with Rule-based Large-scale Reinforcement Learning<p>
 </div>
 <hr>
 <div align="center">
