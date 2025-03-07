@@ -11,7 +11,7 @@
 
 <div align="center">
 <p align="center">
-  📖<a href="https://github.com/ModalMinds/MM-Eureka/blob/main/MM_Eureka_paper.pdf">Paper</a> |
+  📖<a href="https://github.com/ModalMinds/MM-EUREKA/blob/main/MM_Eureka_paper.pdf">Paper</a> |
   📊<a href="https://huggingface.co/datasets/FanqingM/MM-Eureka-Dataset">Datasets</a> |
   🤗<a href="https://huggingface.co/FanqingM/MM-Eureka-8B">MM-Eureka-8B</a> |
   🤗<a href="https://huggingface.co/FanqingM/MM-Eureka-Zero-38B">MM-Eureka-Zero-38B</a>
