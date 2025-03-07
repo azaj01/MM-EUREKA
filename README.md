@@ -165,7 +165,7 @@ We acknowledge the outstanding open-source contributions from [OpenRLHF](https:/
 ```
 @misc{MM-EUREKA2025,
   title={MM-EUREKA: Exploring Visual Aha Moment with Rule-Based Large-Scale Reinforcement Learning},
-  author={Fanqing Meng and Lingxiao Du and Zongkai Liu and Zhixiang Zhou and Quanfeng Lu and Daocheng Fu and Botian Shi and Wenhai Wang and Junjun He and Kaipeng Zhang and Ping Luo and Qiaosheng Zhang and Wenqi Shao},
+  author={Fanqing Meng and Lingxiao Du and Zongkai Liu and Zhixiang Zhou and Quanfeng Lu and Daocheng Fu and Botian Shi and Wenhai Wang and Junjun He and Kaipeng Zhang and Ping Luo and Yu Qiao and Qiaosheng Zhang and Wenqi Shao},
   year={2025},
   howpublished={\url{https://github.com/ModalMinds/MM-Eureka}},
 }
