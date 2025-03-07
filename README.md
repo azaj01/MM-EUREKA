@@ -40,7 +40,7 @@ While rule-based RL has shown remarkable success in improving LLMs' reasoning ab
 
 We demonstrate that both instruction-tuned and pre-trained models can develop strong multimodal reasoning capabilities through rule-based RL without supervised fine-tuning, showing superior data efficiency compared to alternative approaches. 
 
-🔥We open-source our complete pipeline to foster further research in this area. We release all our codes, models, data, etc. at [MM-Eureka](https://github.com/ModalMinds/MM-Eureka)
+🔥We open-source our complete pipeline to foster further research in this area. We release all our codes, models, data, etc. at [MM-EUREKA](https://github.com/ModalMinds/MM-EUREKA)
 
 ## 🗞️ News
 
