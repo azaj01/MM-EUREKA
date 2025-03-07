@@ -24,7 +24,7 @@
 </div>
 <hr>
 <div align="center">
-<a href="https://github.com/ModalMinds/MM-Eureka/blob/main/MM_Eureka_paper.pdf">[[Paper PDF Link]]</a>
+<a href="https://github.com/ModalMinds/MM-EUREKA/blob/main/MM_Eureka_paper.pdf">[[Paper PDF Link]]</a>
 </div>
 
 <div align="center">
@@ -45,7 +45,7 @@ We demonstrate that both instruction-tuned and pre-trained models can develop st
 ## 🗞️ News
 
 - **[2025/03/07]** We released `MM-Eureka`.
-  - 📖 Paper: [MM-Eureka-paper](https://github.com/ModalMinds/MM-Eureka/blob/main/MM_Eureka_paper.pdf) 
+  - 📖 Paper: [MM-Eureka-paper](https://github.com/ModalMinds/MM-EUREKA/blob/main/MM_Eureka_paper.pdf) 
   - 🤗 Model: [MM-Eureka-8B](https://huggingface.co/FanqingM/MM-Eureka-8B) & [MM-Eureka-Zero-38B](https://huggingface.co/FanqingM/MM-Eureka-Zero-38B)
   - 📊 Dataset: [MM-Eureka-Dataset](https://huggingface.co/datasets/FanqingM/MM-Eureka-Dataset)
 
@@ -79,8 +79,8 @@ This repository is built upon [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF), 
 ### 📦 Installation
 
 ```shell
-git clone https://github.com/ModalMinds/MM-Eureka.git
-cd MM-Eureka
+git clone https://github.com/ModalMinds/MM-EUREKA.git
+cd MM-EUREKA
 pip install -e .[vllm]
 
 # install flash-attn==2.3.6:
@@ -149,7 +149,7 @@ sh examples/scripts/train_mm_eureka_8b_multi_node.sh
 
 ## ⭐ Starchart
 
-[![Star History Chart](https://api.star-history.com/svg?repos=ModalMinds/MM-Eureka&type=Date)](https://star-history.com/#ModalMinds/MM-Eureka&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=ModalMinds/MM-EUREKA&type=Date)](https://star-history.com/#ModalMinds/MM-EUREKA&Date)
 
 ## 🤝 Contribution
 
