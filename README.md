@@ -65,7 +65,7 @@ This repository is built upon [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF), 
 ## 🤖 Models
 
 <div align="center">
-    <img alt="Training Logs" src="./docs/training_log.png"/>
+    <img alt="Training Log" src="./docs/training_log.png"/>
 </div>
 *Figure 1 | Train Time Scale-up on Accuracy Reward and Response Length of Rule-Based RL. (a) represents the training scenario on InternVL2.5-instruct-8B, while (b) corresponds to the training scenario on InternVL2.5-pretrained-38B. It can be observed that stable improvements in accuracy reward and response length can be achieved regardless of whether the model is based on an instruct model or a pretrained model.*
 
