@@ -239,7 +239,7 @@ class PPOTrainer(ABC):
                         output = [o.replace("<IMG_CONTEXT>", "").replace("<img></img>", "<image>") for o in output]
                         self.strategy.print(output)
                     self.replay_buffer.append(experience)
-                if args.enable_accuracy_filter and steps > args.freezing_filter_steps:
+                if self.args.enable_accuracy_filter and steps > self.args.freezing_filter_steps:
                     self.replay_buffer.all_gather(self.strategy)
                 if self.args.advantage_estimator != "group_norm":
                     self.replay_buffer.normalize("advantages", self.strategy)
@@ -265,7 +265,7 @@ class PPOTrainer(ABC):
     def ppo_train(self, global_steps=0):
         torch.cuda.empty_cache()
         # replay buffer may be empty at first, we should rebuild at each training
-        if self.strategy.args.enable_accuracy_filter and global_steps > self.strategy.args.freezing_filter_steps:
+        if self.args.enable_accuracy_filter and global_steps > self.args.freezing_filter_steps:
             dataloader = self.strategy.setup_dataloader(
                 self.replay_buffer,
                 batch_size=self.replay_buffer.sample_batch_size,
