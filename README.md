@@ -38,7 +38,7 @@ We present **MM-Eureka** and **MM-Eureka-Zero**, a series of multimodal reasonin
 
 While rule-based RL has shown remarkable success in improving LLMs' reasoning abilities in text domains, its application to multimodal settings has remained challenging. Our work reproduces key characteristics of text-based RL systems like DeepSeek-R1 in the multimodal space for the first time, including steady increases in **accuracy reward** and **response length**, and the emergence of **reflection behaviors**. 
 
-We demonstrate that both instruction-tuned and pre-trained models can develop strong multimodal reasoning capabilities through rule-based RL without supervised fine-tuning, showing superior data efficiency compared to alternative approaches. 
+We demonstrate that both instruction-tuned and pre-trained models can develop strong multimodal reasoning capabilities through rule-based RL without supervised fine-tuning, showing superior **data efficiency** compared to alternative approaches. 
 
 🔥We open-source our complete pipeline to foster further research in this area. We release all our codes, models, data, etc. at [MM-EUREKA](https://github.com/ModalMinds/MM-EUREKA)
 
@@ -61,6 +61,9 @@ This repository is built upon [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF), 
   - Support hybrid engine (`--colocate_all_models`, `--vllm_enable_sleep`).
 - **Better Rule-based Reward support**: Better training visualization for Rule-based Rewards (i.g. Format Reward, Accuracy Reward, Repetition Penalty)
 - **Online Filtering**: Filtering out experiences based on Accuracy Reward during training as in [PRIME](https://github.com/PRIME-RL/PRIME)
+  - Use `--enable_accuracy_filter`, `--freezing_filter_steps`, `--accuracy_lower_bound`, `--accuracy_upper_bound` to control the behavior of online accuracy filter.
+  - Online Accuracy filter is not currently enabled in our default settings, refer to the Disccusion Section in our [paper](https://github.com/ModalMinds/MM-EUREKA/blob/main/MM_Eureka_paper.pdf) for more details.
+
 
 ## 🤖 Models
 
@@ -121,9 +124,14 @@ For custom dataset, format your data in to a JSONL file,  where each entry is a 
 }
 ```
 
+> [!NOTE]
+> For text-only inputs, we follow InternVL's official approach, which requires a dummy image input. 
+> Specifically, you should provide a (224, 224) pure white image as a placeholder.
+> We have already provided such a blank image at: `examples/blank.png`
+
 ### 🌐 Start Training
 
-Before starting your training, ensure that the paths in the provided training scripts are correctly set and that environment variables like `$MASTER_ADDR` and `$NODE_RANK` are properly configured.
+Before starting your own training, ensure that the paths in the provided training scripts are correctly set and that environment variables like `$MASTER_ADDR` and `$NODE_RANK` are properly configured.
 
 **start MM-Eureka-8B training**
 
@@ -139,10 +147,10 @@ Before starting your training, ensure that the paths in the provided training sc
   sh examples/scripts/train_mm_eureka_8b_multi_node.sh
   ```
 
-**start MM-Eureke-Zero-38B training**
+**start MM-Eureka-Zero-38B training**
 
 ```shell
-sh examples/scripts/train_mm_eureka_8b_multi_node.sh
+sh examples/scripts/train_mm_eureka_zero_38b_multi_node.sh
 ```
 
 
@@ -170,4 +178,3 @@ We acknowledge the outstanding open-source contributions from [OpenRLHF](https:/
   howpublished={\url{https://github.com/ModalMinds/MM-EUREKA}},
 }
 ```
-
