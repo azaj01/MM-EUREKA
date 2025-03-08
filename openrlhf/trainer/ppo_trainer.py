@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Optional
 import torch
 import torch.nn as nn
 from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from openrlhf.models import Actor, GPTLMLoss, PolicyLoss, ValueLoss
@@ -264,7 +265,7 @@ class PPOTrainer(ABC):
     def ppo_train(self, global_steps=0):
         torch.cuda.empty_cache()
         # replay buffer may be empty at first, we should rebuild at each training
-        if args.enable_accuracy_filter and global_step > args.freezing_filter_steps:
+        if self.strategy.args.enable_accuracy_filter and global_steps > self.strategy.args.freezing_filter_steps:
             dataloader = self.strategy.setup_dataloader(
                 self.replay_buffer,
                 batch_size=self.replay_buffer.sample_batch_size,
