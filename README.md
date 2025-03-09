@@ -24,9 +24,6 @@
 </div>
 <hr>
 <div align="center">
-<img alt="MM-Eureka logo" src="https://github.com/user-attachments/assets/a04ebfef-9ac4-44ae-a07b-48586794903a" style="height: 400px;" />
-</div>
-<div align="center">
 <a href="https://github.com/ModalMinds/MM-EUREKA/blob/main/MM_Eureka_paper.pdf">[[Paper PDF Link]]</a>
 </div>
 
@@ -170,8 +167,11 @@ Please refer to `CONTRIBUTING.md` before you dive in！
 
 ## 📬 Contact
 
-If you have any questions or would like to engage with our community, feel free to scan the QR code to join our WeChat group.
+If you have any questions or would like to engage with our community, feel free to scan the QR code below to join our WeChat group.
 
+<div align="center">
+<img alt="MM-Eureka logo" src="https://github.com/user-attachments/assets/a04ebfef-9ac4-44ae-a07b-48586794903a" style="height: 400px;" />
+</div>
 
 ## 🎓 Acknowledgements
 
