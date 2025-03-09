@@ -168,10 +168,9 @@ MM-Eureka is stil under active development, if you want to contribute, please fe
 
 Please refer to `CONTRIBUTING.md` before you dive in！
 
-##  Contact
+## 📬 Contact
 
-if you have any questions，you can scan the qr code to add us wechat group
-
+If you have any questions or would like to engage with our community, feel free to scan the QR code to join our WeChat group.
 
 
 ## 🎓 Acknowledgements
