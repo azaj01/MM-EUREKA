@@ -1,4 +1,4 @@
-<div align="center">
+![image](https://github.com/user-attachments/assets/a04ebfef-9ac4-44ae-a07b-48586794903a)<div align="center">
     <img alt="MM-Eureka logo" src="./docs/logo.png" style="height: 200px;" />
 </div>
 
@@ -164,6 +164,12 @@ sh examples/scripts/train_mm_eureka_zero_38b_multi_node.sh
 MM-Eureka is stil under active development, if you want to contribute, please feel free to make a pull request or create an issue.
 
 Please refer to `CONTRIBUTING.md` before you dive in！
+
+##  Contact
+
+if you have any questions，you can scan the qr code to add us wechat group
+
+
 
 ## 🎓 Acknowledgements
 
