@@ -23,7 +23,9 @@
 <p style="text-align: center;">MM-EUREKA: Exploring Visual Aha Moment with Rule-based Large-scale Reinforcement Learning<p>
 </div>
 <hr>
+<div align="center">
 <img alt="MM-Eureka logo" src="https://github.com/user-attachments/assets/a04ebfef-9ac4-44ae-a07b-48586794903a" style="height: 400px;" />
+</div>
 <div align="center">
 <a href="https://github.com/ModalMinds/MM-EUREKA/blob/main/MM_Eureka_paper.pdf">[[Paper PDF Link]]</a>
 </div>
