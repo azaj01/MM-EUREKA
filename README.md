@@ -155,7 +155,13 @@ Before starting your own training, ensure that the paths in the provided trainin
 sh examples/scripts/train_mm_eureka_zero_38b_multi_node.sh
 ```
 
+**Qwen training log**
 
+<div align="center">
+    <img alt="Qwen training log" src="./docs/Qwen_log.png" style="height: 200px;" />
+</div>
+
+Although we use the internvl2.5-8b-instruct filtered dataset, we can still observe a steady increase in accuracy reward and response length when training Qwen-VL2.5-7B
 
 ## ⭐ Starchart
 
