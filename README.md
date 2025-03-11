@@ -102,6 +102,8 @@ python setup.py install
 
 You can download our training data from [MM-Eureka-Dataset](https://huggingface.co/datasets/FanqingM/MM-Eureka-Dataset)
 
+Once downloaded, refer to the section below for additional data formation. You may need to update the `image_urls` field to reference your local image paths for proper processing.
+
 #### Custom dataset
 
 For custom dataset, format your data in to a JSONL file,  where each entry is a dictionary organized in the following format. 
