@@ -1,23 +1,23 @@
-from typing import Any, Dict
-
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
 
-def preprocess_data(data_item, input_template=None, input_key="input", apply_chat_template=None) -> Dict[str, Any]:
-    assert apply_chat_template
-    assert "conversations" in data_item
-    assert "image_urls" in data_item
+def preprocess_data(data, input_template=None, input_key="input", apply_chat_template=None) -> dict:
+    if apply_chat_template:
+        chat = data[input_key]
+        if isinstance(chat, str):
+            chat = [{"role": "user", "content": chat}]
+        prompt = apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
+    else:
+        prompt = data[input_key]
+        if input_template:
+            prompt = input_template.format(prompt)
 
-    conversations = data_item["conversations"]
-    assert len(conversations) == 2
-    prompt = apply_chat_template(conversations, tokenize=False, add_generation_prompt=True)
-
-    data = {
+    d = {
         "prompt": prompt,
-        **data_item,
+        **data,
     }
-    return data
+    return d
 
 
 class PromptDataset(Dataset):

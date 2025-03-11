@@ -3,18 +3,14 @@ from typing import Optional, Tuple, Union
 import torch
 import torch.distributed as dist
 import torch.nn as nn
-from flash_attn.utils.distributed import all_gather
 from peft import LoraConfig, TaskType, get_peft_model
 from peft.tuners.lora import LoraLayer
-from torch.nn import functional as F
-from transformers import AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoConfig, BitsAndBytesConfig
 from transformers.integrations.deepspeed import HfDeepSpeedConfig
 
-from openrlhf.internvl import InternVLChatModel
-from openrlhf.internvl.train.constants import IMG_CONTEXT_TOKEN
-
+from ..utils.utils import get_generation_cls
 from .ring_attn_utils import convert_ring_attn_params
-from .utils import freeze_params, log_probs_from_logits, reset_position_ids
+from .utils import log_probs_from_logits, reset_position_ids
 
 
 class Actor(nn.Module):
@@ -64,7 +60,6 @@ class Actor(nn.Module):
             else:
                 dschf = None
 
-            assert not load_in_4bit
             if load_in_4bit:
                 assert bf16, "we only support bnb_4bit_compute_dtype = bf16"
                 nf4_config = BitsAndBytesConfig(
@@ -76,7 +71,10 @@ class Actor(nn.Module):
             else:
                 nf4_config = None
 
-            self.model = InternVLChatModel.from_pretrained(
+            # There is no AutoModelForConditionalGeneration in transformers. We manually implement it.
+            config = AutoConfig.from_pretrained(pretrain_or_model)
+            model_cls = get_generation_cls(config)
+            self.model = model_cls.from_pretrained(
                 pretrain_or_model,
                 trust_remote_code=True,
                 attn_implementation=attn_implementation,
@@ -84,11 +82,7 @@ class Actor(nn.Module):
                 torch_dtype=torch.bfloat16 if bf16 else "auto",
                 device_map=device_map,
             )
-            freeze_params(self.model.vision_model)
-            tokenizer = AutoTokenizer.from_pretrained(pretrain_or_model, trust_remote_code=True)
-            self.model.img_context_token_id = tokenizer.convert_tokens_to_ids(IMG_CONTEXT_TOKEN)
 
-            assert not lora_rank > 0
             # LoRA
             if lora_rank > 0:
                 # https://github.com/huggingface/peft/issues/137
@@ -193,17 +187,21 @@ class Actor(nn.Module):
     def forward(
         self,
         sequences: torch.LongTensor,
-        pixel_values: torch.Tensor,
-        image_flags: torch.LongTensor,
         num_actions: Optional[Union[int, list[int]]] = None,
         attention_mask: Optional[torch.Tensor] = None,
         return_output=False,
         ring_attn_group: Optional[dist.ProcessGroup] = None,
-        logps_allgather=False,
         packed_seq_lens: Optional[list[int]] = None,
+        visual_inputs: Optional[dict] = None,
     ) -> torch.Tensor:
         """Returns action log probs"""
-        assert not self.packing_samples
+        if visual_inputs is None:
+            visual_inputs = {}
+        """
+        for k,v in visual_inputs.items():
+            if v.dtype == torch.float32:
+                visual_inputs[k] = v.to(self.model.get_input_embeddings().weight.dtype)
+        """
         if not self.packing_samples:
             # https://github.com/OpenRLHF/OpenRLHF/issues/217
             position_ids = attention_mask.long().cumsum(-1) - 1
@@ -211,7 +209,6 @@ class Actor(nn.Module):
         else:
             # convert attention_mask to position_ids
             if ring_attn_group is not None:
-                labels = sequences
                 sequences, attention_mask, position_ids = convert_ring_attn_params(
                     sequences, attention_mask, packed_seq_lens, ring_attn_group
                 )
@@ -219,14 +216,7 @@ class Actor(nn.Module):
                 position_ids = reset_position_ids(attention_mask)
             # explicitly ignore attention_mask for packing_samples
             attention_mask = None
-
-        output = self.model(
-            pixel_values=pixel_values,
-            input_ids=sequences,
-            attention_mask=attention_mask,
-            position_ids=position_ids,
-            image_flags=image_flags,
-        )
+        output = self.model(sequences, attention_mask=attention_mask, position_ids=position_ids, **visual_inputs)
         # https://github.com/OpenRLHF/OpenRLHF/pull/634
         output["logits"] = output["logits"].to(torch.float32)
 
@@ -234,29 +224,11 @@ class Actor(nn.Module):
             assert return_output
             return output
 
-        assert not self.packing_samples
+        log_probs = log_probs_from_logits(output["logits"][:, :-1, :], sequences[:, 1:])
+
         if not self.packing_samples:
-            log_probs = log_probs_from_logits(output["logits"][:, :-1, :], sequences[:, 1:])
             action_log_probs = log_probs[:, -num_actions:]
         else:
-            if ring_attn_group is not None and logps_allgather:
-                rank = dist.get_rank(ring_attn_group)
-                ring_attn_size = dist.get_world_size(ring_attn_group)
-                total_seq_len = labels.numel()
-                local_seq_len = total_seq_len // ring_attn_size
-                local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
-                local_label = labels[:, local_slice]
-                if rank == ring_attn_size - 1:
-                    # add a dummy label to the last logit
-                    local_label = F.pad(local_label, (0, 1), value=0)
-                local_per_token_logps = torch.gather(
-                    output["logits"].log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
-                ).squeeze(2)
-                per_token_logps = all_gather(local_per_token_logps, ring_attn_group).reshape((1, -1))
-                log_probs = per_token_logps[:, :-1]
-            else:
-                log_probs = log_probs_from_logits(output["logits"][:, :-1, :], sequences[:, 1:])
-
             assert isinstance(num_actions, list) and len(num_actions) == len(packed_seq_lens)
             action_log_probs = []
             offset = 0

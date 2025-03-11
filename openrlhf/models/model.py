@@ -6,11 +6,12 @@ import torch.nn as nn
 from flash_attn.utils.distributed import all_gather
 from peft import LoraConfig, get_peft_model
 from peft.tuners.lora import LoraLayer
-from transformers import AutoConfig, AutoModel, BitsAndBytesConfig
+from transformers import AutoConfig, BitsAndBytesConfig
 from transformers.integrations.deepspeed import HfDeepSpeedConfig
 
 from openrlhf.utils.logging_utils import init_logger
 
+from ..utils.utils import get_generation_cls
 from .ring_attn_utils import convert_ring_attn_params
 from .utils import reset_position_ids
 
@@ -73,13 +74,12 @@ def get_llm_for_sequence_regression(
     # Prioritize using the value_head_prefix in the model configuration.
     value_head_prefix = getattr(config, "value_head_prefix", value_head_prefix)
     logger.info(f"set value_head_prefix to `{value_head_prefix}`")
-
-    base_class = AutoModel._model_mapping[type(config)]
+    base_class = get_generation_cls(config)
     base_pretrained_class = base_class.__base__
     if model_type == "reward":
-        cls_class = _get_reward_model(base_pretrained_class, base_class, value_head_prefix, packing_samples)
+        cls_class = _get_reward_model(base_class, value_head_prefix, packing_samples)
     else:
-        cls_class = _get_critic_model(base_pretrained_class, base_class, value_head_prefix, packing_samples)
+        cls_class = _get_critic_model(base_class, value_head_prefix, packing_samples)
 
     # Note: dschf is defined in function scope to avoid global effects
     # https://huggingface.co/docs/transformers/main_classes/deepspeed#nontrainer-deepspeed-integration
@@ -156,13 +156,12 @@ def get_llm_for_sequence_regression(
     return model
 
 
-def _get_reward_model(base_pretrained_model, base_llm_model, value_head_prefix="score", packing_samples=False):
-    class RewardModel(base_pretrained_model):
+def _get_reward_model(base_llm_model, value_head_prefix="score", packing_samples=False):
+    class RewardModel(base_llm_model):
         supports_gradient_checkpointing = True
 
         def __init__(self, config: AutoConfig):
             super().__init__(config)
-            setattr(self, self.base_model_prefix, base_llm_model(config))
 
             self.value_head_prefix = value_head_prefix
             setattr(self, value_head_prefix, nn.Linear(config.hidden_size, 1, bias=False))
@@ -185,9 +184,11 @@ def _get_reward_model(base_pretrained_model, base_llm_model, value_head_prefix="
             attention_mask: Optional[torch.Tensor] = None,
             return_output=False,
             ring_attn_group=None,
-            pad_sequence=False,
             packed_seq_lens=None,
+            visual_inputs=None,
         ) -> torch.Tensor:
+            if visual_inputs is None:
+                visual_inputs = {}
             if not self.packing_samples:
                 # https://github.com/OpenRLHF/OpenRLHF/issues/217
                 position_ids = attention_mask.long().cumsum(-1) - 1
@@ -203,24 +204,29 @@ def _get_reward_model(base_pretrained_model, base_llm_model, value_head_prefix="
                 # explicitly ignore attention_mask for packing_samples
                 attention_mask = None
 
-            outputs = getattr(self, self.base_model_prefix)(
-                input_ids, attention_mask=attention_mask, position_ids=position_ids
+            outputs = super().forward(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                output_hidden_states=True,
+                **visual_inputs,
             )
-            last_hidden_states = outputs["last_hidden_state"]
+            if "last_hidden_state" in outputs:
+                last_hidden_states = outputs["last_hidden_state"]
+            elif "hidden_states" in outputs:
+                last_hidden_states = outputs["hidden_states"][-1]
+            else:
+                raise ValueError("outputs should contain either last_hidden_state or hidden_states")
             values = getattr(self, self.value_head_prefix)(last_hidden_states).squeeze(-1)
 
             if self.packing_samples:
-                packed_seq_lens = torch.tensor(packed_seq_lens, device=values.device)
-                eos_indices = packed_seq_lens.cumsum(dim=0) - 1
                 if ring_attn_group is not None:
                     reward = all_gather(values, ring_attn_group).reshape(1, -1)
-                    if pad_sequence:
-                        ring_attn_size = torch.distributed.get_world_size(ring_attn_group)
-                        pad_len = (ring_attn_size - reward.shape[-1] % ring_attn_size) % ring_attn_size
-                        # Since padding was applied at the end during packing, the position of the EOS (End Of Sequence) needs to be corrected.
-                        eos_indices[-1] -= pad_len + 1
                 else:
                     reward = values
+                # TODO: convert packed_seq_lens into torch tensor in advance
+                packed_seq_lens = torch.tensor(packed_seq_lens, device=values.device)
+                eos_indices = packed_seq_lens.cumsum(dim=0) - 1
                 reward = reward.squeeze(0).gather(dim=0, index=eos_indices)
             else:
                 eos_indices = attention_mask.size(1) - 1 - attention_mask.long().fliplr().argmax(dim=1, keepdim=True)
@@ -234,13 +240,12 @@ def _get_reward_model(base_pretrained_model, base_llm_model, value_head_prefix="
     return RewardModel
 
 
-def _get_critic_model(base_pretrained_model, base_llm_model, value_head_prefix="score", packing_samples=False):
-    class CriticModel(base_pretrained_model):
+def _get_critic_model(base_llm_model, value_head_prefix="score", packing_samples=False):
+    class CriticModel(base_llm_model):
         supports_gradient_checkpointing = True
 
         def __init__(self, config: AutoConfig):
             super().__init__(config)
-            setattr(self, self.base_model_prefix, base_llm_model(config))
 
             self.value_head_prefix = value_head_prefix
             setattr(self, value_head_prefix, nn.Linear(config.hidden_size, 1, bias=False))
@@ -263,9 +268,8 @@ def _get_critic_model(base_pretrained_model, base_llm_model, value_head_prefix="
             num_actions: Optional[Union[int, list[int]]] = None,
             attention_mask: Optional[torch.Tensor] = None,
             return_output=False,
-            ring_attn_group=None,
-            values_allgather=False,
             packed_seq_lens=None,
+            visual_inputs={},
         ) -> torch.Tensor:
             if not self.packing_samples:
                 # https://github.com/OpenRLHF/OpenRLHF/issues/217
@@ -273,24 +277,25 @@ def _get_critic_model(base_pretrained_model, base_llm_model, value_head_prefix="
                 position_ids.masked_fill_(attention_mask == 0, 1)
             else:
                 # convert attention_mask to position_ids
-                if ring_attn_group is not None:
-                    input_ids, attention_mask, position_ids = convert_ring_attn_params(
-                        input_ids, attention_mask, packed_seq_lens, ring_attn_group
-                    )
-                else:
-                    position_ids = reset_position_ids(attention_mask)
+                position_ids = reset_position_ids(attention_mask)
                 # explicitly ignore attention_mask for packing_samples
                 attention_mask = None
 
-            outputs = getattr(self, self.base_model_prefix)(
-                input_ids, attention_mask=attention_mask, position_ids=position_ids
+            outputs = super().forward(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                output_hidden_states=True,
+                **visual_inputs,
             )
-            last_hidden_states = outputs["last_hidden_state"]
-            values = getattr(self, self.value_head_prefix)(last_hidden_states).squeeze(-1)
-            if ring_attn_group is not None and values_allgather:
-                values = all_gather(values, ring_attn_group).reshape(values.shape[0], -1)[:, :-1]
+            if "last_hidden_state" in outputs:
+                last_hidden_states = outputs["last_hidden_state"]
+            elif "hidden_states" in outputs:
+                last_hidden_states = outputs["hidden_states"][-1]
             else:
-                values = values[:, :-1]
+                raise ValueError("outputs should contain either last_hidden_state or hidden_states")
+            values = getattr(self, self.value_head_prefix)(last_hidden_states).squeeze(-1)[:, :-1]
+
             # normalize reward
             if self.normalize_reward:
                 values = (values - self.mean) / self.std

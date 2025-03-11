@@ -11,9 +11,8 @@ from transformers.trainer import get_scheduler
 from openrlhf.models import get_llm_for_sequence_regression
 from openrlhf.trainer import PPOTrainer
 from openrlhf.trainer.ppo_utils import Experience
-from openrlhf.utils import get_tokenizer
+from openrlhf.utils import get_tokenizer, get_vl_processor
 from openrlhf.utils.deepspeed import DeepspeedStrategy
-from openrlhf.utils.deepspeed.deepspeed_utils import offload_deepspeed_states, reload_deepspeed_states
 
 from .launcher import BasePPORole
 
@@ -88,12 +87,6 @@ class CriticModelRayActor(BasePPORole):
         strategy.print("reward normalization status: {}".format(strategy.args.normalize_reward))
         strategy.print("mean: {}, std {}".format(critic.mean, critic.std))
 
-        # configure tokenizer
-        if strategy.args.save_value_network:
-            self.tokenizer = get_tokenizer(
-                pretrain, critic, "left", strategy, use_fast=not strategy.args.disable_fast_tokenizer
-            )
-
         # configure optimizer
         critic_optim = strategy.create_optimizer(
             critic, lr=args.critic_learning_rate, betas=args.adam_betas, weight_decay=args.l2
@@ -125,13 +118,21 @@ class CriticModelRayActor(BasePPORole):
             strategy.load_ckpt(self.critic, ckpt_path)
             strategy.print(f"Loaded the checkpoint: {ckpt_path}")
 
-        # initial offload
-        if strategy.args.deepspeed_enable_sleep:
-            self.offload_states()
-
         # configure Trainer
         # only use wandb at actor model
         strategy.args.use_wandb = False
+        # configure tokenizer
+        args = strategy.args
+        if args.train_vlm:
+            self.processor = get_vl_processor(
+                pretrain, self.critic, "left", strategy, use_fast=not strategy.args.disable_fast_tokenizer
+            )
+            self.tokenizer = self.processor.tokenizer
+        else:
+            self.processor = None
+            self.tokenizer = get_tokenizer(
+                pretrain, self.critic, "left", strategy, use_fast=not strategy.args.disable_fast_tokenizer
+            )
         self.trainer = CriticPPOTrainer(
             strategy,
             actor=None,
@@ -150,6 +151,8 @@ class CriticModelRayActor(BasePPORole):
             prompt_max_len=args.prompt_max_len,
             value_clip=args.value_clip,
             eps_clip=args.eps_clip,
+            processor=self.processor,
+            tokenizer=self.tokenizer,
         )
 
     def forward(
@@ -158,18 +161,21 @@ class CriticModelRayActor(BasePPORole):
         num_actions: Optional[Union[int, list[int]]] = None,
         attention_mask: Optional[torch.Tensor] = None,
         packed_seq_lens=None,
+        visual_inputs=None,
     ) -> torch.Tensor:
         """Generates critic values."""
         device = torch.cuda.current_device()
         self.critic.eval()
+        if visual_inputs is None:
+            visual_inputs = {}
         with torch.no_grad():
+            visual_inputs = {k: v.to(device) for k, v in visual_inputs.items()}
             value = self.critic(
                 sequences.to(device),
                 num_actions,
                 attention_mask.to(device),
-                ring_attn_group=self.strategy.ring_attn_group,
-                values_allgather=True,
                 packed_seq_lens=packed_seq_lens,
+                visual_inputs=visual_inputs,
             )
         self.critic.train()  # reset model state
         return value.to("cpu")
@@ -194,20 +200,21 @@ class CriticModelRayActor(BasePPORole):
         args = self.strategy.args
 
         # save model checkpoint after fitting on only rank0
-        self.strategy.save_model(
-            self.critic,
-            self.tokenizer,
-            args.save_path + "_critic",
-        )
+        if args.train_vlm:
+            self.strategy.save_model(
+                self.critic,
+                self.processor,
+                args.save_path + "_critic",
+            )
+        else:
+            self.strategy.save_model(
+                self.critic,
+                self.tokenizer,
+                args.save_path + "_critic",
+            )
 
     def save_checkpoint(self, tag):
         args = self.strategy.args
         self.strategy.save_ckpt(
             self.critic, os.path.join(args.ckpt_path, "_critic"), tag, args.max_ckpt_num, args.max_ckpt_mem
         )
-
-    def reload_states(self):
-        reload_deepspeed_states(self.critic)
-
-    def offload_states(self):
-        offload_deepspeed_states(self.critic)

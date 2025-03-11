@@ -6,8 +6,30 @@ import torch
 from math_verify import ExprExtractionConfig, LatexExtractionConfig, StringExtractionConfig, parse, verify
 
 LOG_PATH = os.environ.get("REWARD_LOG_PATH", "reward.log")
+import re
 
 choices = ["a", "b", "c", "d"]
+problem_pattern = r"<\|im_start\|>user\n(.*?)<\|im_end\|>"
+response_prefix = r"<\|im_start\|>assistant\n"
+
+
+def get_response_from_query(q: str):
+    ends_of_sentence = ["<|im_end|>", "<｜end▁of▁sentence｜>", "<|endoftext|>"]
+    pos = re.search(response_prefix, q)
+    if pos is None:
+        return ""
+    response = q[pos.end() :]
+    for e in ends_of_sentence:
+        response = response.replace(e, "")
+    return response.strip()
+
+
+def get_query_from_query(q: str):
+    try:
+        matches = re.findall(problem_pattern, q, re.DOTALL)
+        return matches[0]
+    except:
+        return q
 
 
 def extract_answer_with_tags(text):
@@ -30,6 +52,7 @@ def accuracy_reward_func(completion, answer):
 
     content, sol = response, answer
     answer_parsed = content
+    sol = f"${str(sol)}$"
     gold_parsed = parse(sol)
     if len(gold_parsed) != 0:
         answer_parsed = parse(
@@ -82,44 +105,41 @@ def reward_func(queries, prompts):
     rewards = []
     accuracy_rewards = []
     format_rewards = []
-    repetition_penalties = []
-    pattern = r"<\|im_start\|>\s*assistant(.*?)<\|im_end\|>"
-
     with open(LOG_PATH, "a") as f:
         f.write(f"----------------------------- {current_time} -----------------------------\n")
         for query, prompt in zip(queries, prompts):
             try:
-                query = re.sub(r"\s*<IMG_CONTEXT>\s*", "", query)
-                query = re.sub(r"<img>\s*</img>", " <image>", query)
-                query = re.sub("</s>", "", query)
-                response = re.search(pattern, query, re.DOTALL).group(1).strip()
-                answer = prompt["answer"]
+                response = get_response_from_query(query)
+                if response == "":
+                    f.write("Error: " + query + "\n")
+                    rewards.append(0.0)
+                    accuracy_rewards.append(0.0)
+                    format_rewards.append(0.0)
 
-                accuracy_reward, answer_parsed = accuracy_reward_func(response, answer)
-                format_reward = format_reward_func(response)
-                repetition_penalty = 0.0
+                else:
+                    query1 = get_query_from_query(query)
+                    answer = prompt["answer"]
 
-                rewards.append(accuracy_reward + format_reward)
-                accuracy_rewards.append(accuracy_reward)
-                format_rewards.append(format_reward)
-                repetition_penalties.append(repetition_penalty)
+                    accuracy_reward, answer_parsed = accuracy_reward_func(response, answer)
+                    format_reward = format_reward_func(response)
 
-                f.write(f"===============================================================\n")
-                f.write("Query: " + query + "\n")
-                f.write("Response: " + response + "\n")
-                f.write("Answer: " + answer + "\n")
-                f.write(f"Accuracy Reward: {accuracy_reward}\tFormat Reward: {format_reward}\n\n\n\n")
-                f.write(f"===============================================================\n")
+                    rewards.append(accuracy_reward + format_reward)
+                    accuracy_rewards.append(accuracy_reward)
+                    format_rewards.append(format_reward)
+                    f.write(f"===============================================================\n")
+                    f.write("Query: " + query1 + "\n")
+                    f.write("Response: " + response + "\n")
+                    f.write("Answer: " + answer + "\n")
+                    f.write(f"Accuracy Reward: {accuracy_reward}\tFormat Reward: {format_reward}\n\n\n\n")
+                    f.write(f"===============================================================\n")
             except:
                 f.write("Error: " + query + "\n")
                 rewards.append(0.0)
                 accuracy_rewards.append(0.0)
                 format_rewards.append(0.0)
-                repetition_penalties.append(0.0)
 
     return {
         "rewards": torch.tensor(rewards, dtype=torch.float32),
         "accuracy_rewards": torch.tensor(accuracy_rewards, dtype=torch.float32),
         "format_rewards": torch.tensor(format_rewards, dtype=torch.float32),
-        "repetition_penalties": torch.tensor(repetition_penalties, dtype=torch.float32),
     }
