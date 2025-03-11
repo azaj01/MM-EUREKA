@@ -6,7 +6,6 @@ import torch
 from math_verify import ExprExtractionConfig, LatexExtractionConfig, StringExtractionConfig, parse, verify
 
 LOG_PATH = os.environ.get("REWARD_LOG_PATH", "reward.log")
-import re
 
 choices = ["a", "b", "c", "d"]
 problem_pattern = r"<\|im_start\|>user\n(.*?)<\|im_end\|>"
