@@ -273,7 +273,7 @@ class NaiveExperienceMaker(ABC):
         args = self.strategy.args
         self.actor.eval()
         # sample multiple response
-        all_prompts = sum([[prompt] * args.n_samples_per_prompt for prompt in all_prompts["prompt"]], [])
+        all_prompts_s = sum([[prompt] * args.n_samples_per_prompt for prompt in all_prompts["prompt"]], [])
 
         all_prompts_d = sum(
             [
@@ -283,8 +283,8 @@ class NaiveExperienceMaker(ABC):
             [],
         )
         samples_list = []
-        for i in range(0, len(all_prompts), args.micro_rollout_batch_size):
-            prompts = all_prompts[i : i + args.micro_rollout_batch_size]
+        for i in range(0, len(all_prompts_s), args.micro_rollout_batch_size):
+            prompts = all_prompts_s[i : i + args.micro_rollout_batch_size]
             prompts_d = all_prompts_d[i : i + args.micro_rollout_batch_size]
             if self.data_processor is not None:
                 inputs = self.data_processor(prompts, self.prompt_max_len, device="cuda")
@@ -792,7 +792,7 @@ class RemoteExperienceMaker(NaiveExperienceMaker):
         )
 
         # Expand prompt list based on the number of samples per prompt
-        all_prompts = sum([[prompt] * args.n_samples_per_prompt for prompt in all_prompts["prompt"]], [])
+        all_prompts_s = sum([[prompt] * args.n_samples_per_prompt for prompt in all_prompts["prompt"]], [])
         all_prompts_d = sum(
             [
                 [entry] * args.n_samples_per_prompt
@@ -800,12 +800,12 @@ class RemoteExperienceMaker(NaiveExperienceMaker):
             ],
             [],
         )
-        batch_size = (len(all_prompts) + len(llms) - 1) // len(llms)
+        batch_size = (len(all_prompts_s) + len(llms) - 1) // len(llms)
         # Distribute requests to engines and collect responses to outputs
         refs = []
         if self.data_processor is None:
             # For LLM
-            all_prompt_token_ids = self.tokenize_fn(all_prompts, self.prompt_max_len, padding=False)["input_ids"]
+            all_prompt_token_ids = self.tokenize_fn(all_prompts_s, self.prompt_max_len, padding=False)["input_ids"]
             for i, llm in enumerate(llms):
                 prompt_token_ids = all_prompt_token_ids[i * batch_size : (i + 1) * batch_size]
                 refs.append(
@@ -814,7 +814,7 @@ class RemoteExperienceMaker(NaiveExperienceMaker):
         else:
             # For VLM
             for i, llm in enumerate(llms):
-                messages = all_prompts[i * batch_size : (i + 1) * batch_size]
+                messages = all_prompts_s[i * batch_size : (i + 1) * batch_size]
                 if messages:
                     prompts = self.data_processor.apply_chat_template(
                         messages, tokenize=False, add_generation_prompt=True
@@ -851,7 +851,7 @@ class RemoteExperienceMaker(NaiveExperienceMaker):
         samples_list = []
         for i in range(0, len(all_outputs), args.micro_rollout_batch_size):
             outputs = all_outputs[i : i + self.strategy.args.micro_rollout_batch_size]
-            prompts = all_prompts[i : i + self.strategy.args.micro_rollout_batch_size]
+            prompts = all_prompts_s[i : i + self.strategy.args.micro_rollout_batch_size]
             prompts_d = all_prompts_d[i : i + self.strategy.args.micro_rollout_batch_size]
             if not self.packing_samples:
                 # NOTE: concat all outputs to following format:
