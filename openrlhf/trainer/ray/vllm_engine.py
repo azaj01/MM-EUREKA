@@ -1,4 +1,7 @@
 import os
+import queue
+from collections import defaultdict
+from typing import Any, List
 
 import ray
 from ray.util.placement_group import placement_group
@@ -6,6 +9,8 @@ from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
 from vllm import LLM
 
 from openrlhf.utils.logging_utils import init_logger
+
+from .utils import ray_noset_visible_devices
 
 logger = init_logger(__name__)
 
@@ -21,13 +26,18 @@ def get_all_env_variables():
 class LLMRayActor:
 
     def __init__(self, *args, bundle_indices: list = None, **kwargs):
+        noset_visible_devices = kwargs.pop("noset_visible_devices")
         if kwargs.get("distributed_executor_backend") == "ray":
             # a hack to make the script work.
             # stop ray from manipulating CUDA_VISIBLE_DEVICES
             # at the top-level when the distributed_executor_backend is ray.
             os.environ.pop("CUDA_VISIBLE_DEVICES", None)
-        # every worker will use 0.2 GPU, so that we can schedule
-        # 2 instances on the same GPUs.
+        elif noset_visible_devices:
+            # We need to set CUDA_VISIBLE_DEVICES to the ray assigned GPU
+            # when the distributed_executor_backend is not ray and
+            # RAY_EXPERIMENTAL_NOSET_*_VISIBLE_DEVICES is set.
+            os.environ["CUDA_VISIBLE_DEVICES"] = str(ray.get_gpu_ids()[0])
+
         num_gpus = kwargs.pop("num_gpus")
         if bundle_indices is not None:
             os.environ["VLLM_RAY_PER_WORKER_GPUS"] = str(num_gpus)
@@ -38,7 +48,7 @@ class LLMRayActor:
         self.num_actors = kwargs.pop("num_actors")
         self.actor_counter = 0
         self.requests = {}
-        self.responses = {}
+        self.response_queues = defaultdict(queue.Queue)
 
         self.llm = LLM(*args, **kwargs)
 
@@ -63,36 +73,7 @@ class LLMRayActor:
     def wake_up(self):
         self.llm.wake_up()
 
-    def add_requests(self, actor_rank, *, sampling_params, prompt_token_ids):
-        """
-        Save the requests from actors and generate responses when all actors have sent their requests
-        """
-        self.requests[actor_rank] = prompt_token_ids
-        self.actor_counter += 1
-        if self.actor_counter == self.num_actors:
-            assert len(self.requests) == self.num_actors
-            num_requests = []
-            requests = []
-            for actor_rank, request in self.requests.items():
-                num_requests.append((actor_rank, len(request)))
-                requests.extend(request)
-
-            if len(requests) > 0:
-                # For now we assume that all requests have the same sampling params
-                responses = self.llm.generate(sampling_params=sampling_params, prompt_token_ids=requests)
-            else:
-                responses = []
-
-            offset = 0
-            self.responses = {}
-            for actor_rank, num in num_requests:
-                self.responses[actor_rank] = responses[offset : offset + num]
-                offset += num
-
-            self.actor_counter = 0
-            self.requests = {}
-
-    def add_requests_vlm(self, actor_rank, *, sampling_params, vllm_vision_input):
+    def add_requests(self, actor_rank, *, sampling_params, vllm_vision_input):
         """
         Save the requests from actors and generate responses when all actors have sent their requests
         """
@@ -115,7 +96,7 @@ class LLMRayActor:
             offset = 0
             self.responses = {}
             for actor_rank, num in num_requests:
-                self.responses[actor_rank] = responses[offset : offset + num]
+                self.response_queues[actor_rank].put(responses[offset : offset + num])
                 offset += num
 
             self.actor_counter = 0
@@ -125,7 +106,7 @@ class LLMRayActor:
         """
         Return the responses for the actor with the given rank
         """
-        return self.responses.pop(actor_rank)
+        return self.response_queues[actor_rank].get()
 
 
 def create_vllm_engines(
@@ -143,7 +124,7 @@ def create_vllm_engines(
 ):
     import vllm
 
-    assert vllm.__version__ >= "0.7.2", "OpenRLHF only supports vllm >= 0.7.0"
+    assert vllm.__version__ >= "0.7.2", "OpenRLHF only supports vllm >= 0.7.2"
 
     vllm_engines = []
 
@@ -198,7 +179,36 @@ def create_vllm_engines(
                 bundle_indices=bundle_indices,
                 num_gpus=0.2 if use_hybrid_engine else 1,
                 enable_sleep_mode=vllm_enable_sleep,
+                noset_visible_devices=ray_noset_visible_devices(),
             )
         )
 
+    if vllm_enable_sleep:
+        batch_vllm_engine_call(vllm_engines, "sleep", rank_0_only=False)
+
     return vllm_engines
+
+
+def batch_vllm_engine_call(engines: List[Any], method_name: str, *args, rank_0_only: bool = True, **kwargs):
+    """
+    Batch call a method on multiple vLLM engines.
+    Args:
+        engines: List of vLLM engine instances
+        method_name: Name of the method to call
+        rank_0_only: Only execute on rank 0 if True
+        *args: Positional arguments to pass to the method
+        **kwargs: Keyword arguments to pass to the method
+    Returns:
+        List of results from ray.get() if on rank 0, None otherwise
+    """
+    import torch
+
+    if rank_0_only and torch.distributed.get_rank() != 0:
+        return None
+
+    refs = []
+    for engine in engines:
+        method = getattr(engine, method_name)
+        refs.append(method.remote(*args, **kwargs))
+
+    return ray.get(refs)

@@ -4,9 +4,11 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 import torch
+import torch.distributed as dist
 import torch.nn.functional as F
 
-from .data_processor import BaseDataProcessor
+from openrlhf.models.lmm_kits.base.data_processor import BaseDataProcessor
+
 from .experience_maker import Experience
 
 
@@ -17,6 +19,7 @@ class BufferItem:
     Shapes of each tensor:
     sequences: (S)
     action_log_probs: (A)
+    base_action_log_probs: (A)
     values: (1)
     returns: (1)
     advantages: (1)
@@ -28,6 +31,7 @@ class BufferItem:
 
     sequences: torch.Tensor
     action_log_probs: torch.Tensor
+    base_action_log_probs: torch.Tensor
     values: torch.Tensor
     returns: torch.Tensor
     advantages: torch.Tensor
@@ -43,6 +47,7 @@ def split_experience_batch(experience: Experience, data_processor: Optional[Base
     keys = (
         "sequences",
         "action_log_probs",
+        "base_action_log_probs",
         "values",
         "returns",
         "advantages",
@@ -61,16 +66,13 @@ def split_experience_batch(experience: Experience, data_processor: Optional[Base
         assert batch_size == len(vals)
         for i, v in enumerate(vals):
             batch_kwargs[i][key] = v
-    if data_processor is not None:
-        visual_inputs_batch = experience.visual_inputs
-        visual_inputs_batch["input_ids"] = experience.sequences
-        visual_inputs_chunks = data_processor.split_input_batch(visual_inputs_batch)
-        for i, visual_inputs in enumerate(visual_inputs_chunks):
-            visual_inputs.pop("input_ids")
-            batch_kwargs[i]["visual_inputs"] = visual_inputs
-    else:
-        for i in range(batch_size):
-            batch_kwargs[i]["visual_inputs"] = None
+
+    visual_inputs_batch = experience.visual_inputs
+    visual_inputs_batch["input_ids"] = experience.sequences
+    visual_inputs_chunks = data_processor.split_input_batch(visual_inputs_batch)
+    for i, visual_inputs in enumerate(visual_inputs_chunks):
+        visual_inputs.pop("input_ids")
+        batch_kwargs[i]["visual_inputs"] = visual_inputs
 
     for i in range(batch_size):
         batch_kwargs[i]["info"] = {}
@@ -105,6 +107,7 @@ def make_experience_batch(
     keys = (
         "sequences",
         "action_log_probs",
+        "base_action_log_probs",
         "values",
         "returns",
         "advantages",
@@ -123,16 +126,17 @@ def make_experience_batch(
     for key in items[0].info.keys():
         vals = torch.tensor([item.info[key] for item in items])
         kwargs["info"][key] = vals
-    if data_processor is not None:
-        kwargs["visual_inputs"] = data_processor.make_input_batch([item.visual_inputs for item in items])
+
+    kwargs["visual_inputs"] = data_processor.make_input_batch([item.visual_inputs for item in items])
     return Experience(**kwargs)
 
 
 def remove_padding_in_sequences(items):
     for item in items:
-        seq, act_log_prob, value, ret, adv, att_mask, act_mask = (
+        seq, act_log_prob, base_act_log_prob, value, ret, adv, att_mask, act_mask = (
             item.sequences,
             item.action_log_probs,
+            item.base_action_log_probs,
             item.values,
             item.returns,
             item.advantages,
@@ -147,6 +151,7 @@ def remove_padding_in_sequences(items):
         (
             item.sequences,
             item.action_log_probs,
+            item.base_action_log_probs,
             item.values,
             item.returns,
             item.advantages,
@@ -155,6 +160,7 @@ def remove_padding_in_sequences(items):
         ) = (
             seq[left_pad:right_pad],
             act_log_prob[:right_pad],
+            base_act_log_prob[:right_pad] if item.base_action_log_probs is not None else None,
             value[:right_pad] if item.values is not None else None,
             ret[:right_pad],
             adv[:right_pad],
@@ -176,6 +182,7 @@ class NaiveReplayBuffer(ABC):
     def __init__(
         self,
         sample_batch_size: int,
+        strategy,
         data_processor: Optional[BaseDataProcessor] = None,
         limit: int = 0,
         cpu_offload: bool = True,
@@ -194,6 +201,11 @@ class NaiveReplayBuffer(ABC):
         self.items: List[BufferItem] = []
         self.maxlen = maxlen
         self.drop_maxlen = drop_maxlen
+
+        args = strategy.args
+        self.expected_len = (args.rollout_batch_size * args.n_samples_per_prompt) // (
+            args.actor_num_nodes * args.actor_num_gpus_per_node
+        )
 
     @torch.no_grad()
     def append(self, experience: Experience) -> None:
@@ -227,7 +239,7 @@ class NaiveReplayBuffer(ABC):
         return experience
 
     def __len__(self) -> int:
-        return len(self.items)
+        return self.expected_len
 
     def __getitem__(self, idx: int) -> BufferItem:
         return self.items[idx]
@@ -265,4 +277,13 @@ class NaiveReplayBuffer(ABC):
         rstd = (all_std / all_count).clamp(min=1e-8).rsqrt()
 
         for i, item in enumerate(self):
-            setattr(item, attribute, (items[i] - mean) * rstd)
+            setattr(item, attribute, (items[i] - mean) * rstd + 1e-8)
+
+    def is_full(self):
+        curr_len = len(self.items)
+        all_len: list[int] = [None] * dist.get_world_size()
+        dist.all_gather_object(all_len, curr_len)
+        return min(all_len) >= self.expected_len
+
+    def flush(self):
+        self.items = self.items[self.expected_len :]

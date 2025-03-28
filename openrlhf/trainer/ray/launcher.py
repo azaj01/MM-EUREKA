@@ -86,6 +86,7 @@ class ReferenceModelRayActor(BasePPORole):
         num_actions: int = None,
         attention_mask: Optional[torch.Tensor] = None,
         return_output=False,
+        logps_allgather=False,
         packed_seq_lens: Optional[list[int]] = None,
         visual_inputs: Optional[dict] = None,
     ) -> torch.Tensor:
@@ -99,6 +100,8 @@ class ReferenceModelRayActor(BasePPORole):
                 num_actions,
                 attention_mask.to(device),
                 return_output=return_output,
+                ring_attn_group=self.strategy.ring_attn_group,
+                logps_allgather=logps_allgather,
                 packed_seq_lens=packed_seq_lens,
                 visual_inputs=visual_inputs,
             )
@@ -138,6 +141,7 @@ class RewardModelRayActor(BasePPORole):
         sequences: torch.LongTensor,
         attention_mask: Optional[torch.Tensor] = None,
         packed_seq_lens=None,
+        pad_sequence=False,
         visual_inputs: Optional[dict] = None,
     ) -> torch.Tensor:
         device = torch.cuda.current_device()
@@ -148,6 +152,8 @@ class RewardModelRayActor(BasePPORole):
             reward = self.model(
                 sequences.to(device),
                 attention_mask.to(device),
+                ring_attn_group=self.strategy.ring_attn_group,
+                pad_sequence=True,
                 packed_seq_lens=packed_seq_lens,
                 visual_inputs=visual_inputs,
             )
