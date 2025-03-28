@@ -233,9 +233,9 @@ class NaiveExperienceMaker(ABC):
         ):
             experiences.append(self.make_experience(samples).to_device("cpu"))
 
-        accuracy_rewards_total = sum(e.info["accuracy_rewards"].sum() for e in experiences)
-        accuracy_rewards_count = sum(e.info["accuracy_rewards"].numel() for e in experiences)
-        accuracy_rewards_original = accuracy_rewards_total / accuracy_rewards_count
+        accuracy_reward_total = sum(e.info["accuracy_reward"].sum() for e in experiences)
+        accuracy_reward_count = sum(e.info["accuracy_reward"].numel() for e in experiences)
+        accuracy_reward_original = accuracy_reward_total / accuracy_reward_count
 
         if args.enable_accuracy_filter and global_step > args.freezing_filter_steps:
             experiences = self.filter(experiences)
@@ -286,7 +286,7 @@ class NaiveExperienceMaker(ABC):
             experience.kl = None
             del experience.info["num_actions"]
             experience.to_device("cpu")
-        return experiences, accuracy_rewards_original
+        return experiences, accuracy_reward_original
 
     @torch.no_grad()
     def generate_samples(self, all_prompts: List[str], all_labels, **generate_kwargs) -> List[Samples]:
@@ -616,7 +616,7 @@ class RemoteExperienceMaker(NaiveExperienceMaker):
                 "wait_time": 0,
             }
 
-        experiences, accuracy_rewards_original = super().make_experience_list(
+        experiences, accuracy_reward_original = super().make_experience_list(
             all_prompts, all_labels, global_step, **generate_kwargs
         )
 
@@ -626,7 +626,7 @@ class RemoteExperienceMaker(NaiveExperienceMaker):
                 experience_cpu = deepcopy(experience)
                 experience_cpu.to_device("cpu")
                 self._ref = self.critic.append.remote(experience_cpu)
-        return experiences, accuracy_rewards_original
+        return experiences, accuracy_reward_original
 
     @torch.no_grad()
     def generate_samples(self, all_prompts: List[str], all_labels, **generate_kwargs) -> List[Samples]:

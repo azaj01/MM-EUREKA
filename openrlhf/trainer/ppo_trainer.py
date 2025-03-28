@@ -240,7 +240,7 @@ class PPOTrainer(ABC):
                 disable=not self.strategy.is_rank_0(),
             )
             for rand_prompts, labels in self.prompts_dataloader:
-                experiences, accuracy_rewards_original = self.experience_maker.make_experience_list(
+                experiences, accuracy_reward_original = self.experience_maker.make_experience_list(
                     rand_prompts, labels, steps, **self.generate_kwargs
                 )
                 for i, experience in enumerate(experiences):
@@ -259,7 +259,7 @@ class PPOTrainer(ABC):
                 else:
                     status = {}
 
-                status["accuracy_rewards_original"] = accuracy_rewards_original
+                status["accuracy_reward_original"] = accuracy_reward_original
 
                 if "kl" in status:
                     self.kl_ctl.update(status["kl"], args.rollout_batch_size * args.n_samples_per_prompt)
