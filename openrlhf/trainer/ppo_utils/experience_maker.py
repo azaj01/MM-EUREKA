@@ -432,7 +432,7 @@ class NaiveExperienceMaker(ABC):
         """
 
         args = self.strategy.args
-        accuracy_rewards = torch.cat([experience.info["accuracy_reward"] for experience in experiences])
+        accuracy_rewards = torch.cat([experience.info["accuracy_rewards"] for experience in experiences])
         accuracy_rewards = accuracy_rewards.reshape(-1, args.n_samples_per_prompt).to(device="cuda")
         accuracy_rewards = torch.mean(accuracy_rewards, dim=-1)
         accuracy_counts = Counter(accuracy_rewards.tolist())
