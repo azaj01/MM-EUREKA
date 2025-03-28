@@ -1,23 +1,18 @@
 import json
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from typing import Dict, List, Optional, Union
 
 import torch
-from PIL.Image import Image
 from qwen_vl_utils import process_vision_info
 from transformers.processing_utils import ProcessorMixin
 
 
 class BaseDataProcessor(ABC):
-    def __init__(self, processor: ProcessorMixin, processor_kwargs: Dict):
+    def __init__(self, processor: ProcessorMixin, min_pixels: int, max_pixels: int):
         super().__init__()
         self.processor = processor
-        self.processor_kwargs = processor_kwargs
-        # We use process_vision_info of qwen_vl_utils to get the image inputs for all model,
-        # To be compatible with Qwen2VLImageProcessor, we always set the min_pixels and max_pixels for the processor
-        self.min_pixels = processor_kwargs["min_pixels"]
-        self.max_pixels = processor_kwargs["max_pixels"]
+        self.min_pixels = min_pixels
+        self.max_pixels = max_pixels
 
     @abstractmethod
     def __call__(
@@ -30,12 +25,9 @@ class BaseDataProcessor(ABC):
         add_special_tokens: Optional[bool] = False,
         truncation: Optional[bool] = True,
     ) -> Dict:
-        """
-        We mainly use this function to get the visual inputs for the model.
-        """
         raise NotImplementedError
 
-    def _add_pixel_bounds(self, messages: List[List[Dict]]) -> List[List[Dict]]:
+    def _add_pixel_bounds(self, messages: List[Dict]) -> List[Dict]:
         DEFAULT_MIN_PIXELS = self.min_pixels
         DEFAULT_MAX_PIXELS = self.max_pixels
 
@@ -62,14 +54,13 @@ class BaseDataProcessor(ABC):
     def split_input_batch(self, batch: Dict) -> List[Dict]:
         raise NotImplementedError
 
-    def _format_messages(self, messages: Union[Dict, List[str], str]) -> List[List[Dict]]:
-        messages = deepcopy(messages)
+    def _format_messages(self, messages: Union[Dict, List[str], str]) -> List[Dict]:
         if isinstance(messages, list) and isinstance(messages[0], str):
             formated_messages = [json.loads(m) for m in messages]
         elif isinstance(messages, str):
             formated_messages = [json.loads(messages)]
         elif isinstance(messages, dict):
-            formated_messages = [[messages]]
+            formated_messages = [messages]
         else:
             raise ValueError("Invalid messages format, must be a list of strings or a string or a dict")
         return self._add_pixel_bounds(formated_messages)
@@ -86,7 +77,7 @@ class BaseDataProcessor(ABC):
             messages, tokenize=tokenize, add_generation_prompt=add_generation_prompt
         )
 
-    def get_images_from_messages(self, messages: Union[Dict, List[str], str]) -> List[Image]:
+    def get_images_from_messages(self, messages: Union[Dict, List[str], str]) -> List[Dict]:
         messages = self._format_messages(messages)
         image_inputs, _ = process_vision_info(messages)
         return image_inputs

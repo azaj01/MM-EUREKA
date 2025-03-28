@@ -29,18 +29,6 @@ class BasePatch(ABC):
         """
         return NotImplementedError
 
-    def _register_to_autoclass():
-        """
-        Register the model to the corresponding AutoModel class and AutoConfig class. Used for non-hf customized model.
-        """
-        return NotImplementedError
-
-    def apply_liger_kernel(self):
-        """
-        Apply liger kernel to the model.
-        """
-        return NotImplementedError
-
     @classmethod
     @abstractmethod
     def _load_all_patches(cls):
@@ -49,9 +37,7 @@ class BasePatch(ABC):
         """
         return NotImplementedError
 
-    def load_all_patches(self, use_liger_kernel=False):
+    def load_all_patches(self):
         if not self.loaded:
             self._load_all_patches()
             self.loaded = True
-            if use_liger_kernel:
-                self.apply_liger_kernel()
