@@ -240,6 +240,9 @@ class NaiveExperienceMaker(ABC):
         if args.enable_accuracy_filter and global_step > args.freezing_filter_steps:
             experiences = self.filter(experiences)
 
+        if not experiences:
+            return [], accuracy_rewards_original
+
         experiences, rewards = self.process_experiences(experiences)
 
         # calculate return and advantages
