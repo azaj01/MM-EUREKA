@@ -57,8 +57,6 @@ class BaseDataProcessor(ABC):
     def _format_messages(self, messages: Union[Dict, List[str], str]) -> List[Dict]:
         if isinstance(messages, list) and isinstance(messages[0], str):
             formated_messages = [json.loads(m) for m in messages]
-        if isinstance(messages, list) and isinstance(messages[0], dict):
-            formated_messages = messages
         elif isinstance(messages, str):
             formated_messages = [json.loads(messages)]
         elif isinstance(messages, dict):
