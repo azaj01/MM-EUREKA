@@ -24,7 +24,7 @@ fi
 sleep 30
 
 
-if [ "$PET_NODE_RANK" -eq 0 ]; then
+if [ "$NODE_RANK" -eq 0 ]; then
   RAY_ADDRESS="http://127.0.0.1:$RAY_DASHBOARD_PORT" ray job submit \
   --working-dir $WORKING_DIR \
   --runtime-env MM-EUREKA/runtime_env.json \
