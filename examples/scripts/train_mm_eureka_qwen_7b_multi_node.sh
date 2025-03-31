@@ -27,7 +27,6 @@ sleep 30
 if [ "$NODE_RANK" -eq 0 ]; then
   RAY_ADDRESS="http://127.0.0.1:$RAY_DASHBOARD_PORT" ray job submit \
   --working-dir $WORKING_DIR \
-  --runtime-env MM-EUREKA/runtime_env.json \
   -- python3 -m openrlhf.cli.train_ppo_ray \
   --remote_rm_url examples/scripts/reward_func_qwen_instruct.py \
   --actor_num_nodes 2 \
