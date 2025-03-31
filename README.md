@@ -46,11 +46,13 @@ We present **MM-Eureka-Qwen**, a multimodal reasoning model that successfully ex
   - 📖 Report: [MM-Eureka-Qwen-Report](https://jagged-court-d9d.notion.site/MM-Eureka-Qwen-1c13cc5a384880ffbd2de24e1dee052d) 
   - 🤗 Model: [MM-Eureka-Qwen-7B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B)
   - 📊 Dataset: [MM-Eureka-Dataset](https://huggingface.co/datasets/FanqingM/MM-Eureka-Dataset)
+  - 🚀Code: [MM-Eureka-Qwen-Code](https://github.com/ModalMinds/MM-EUREKA/tree/qwen)
 
 - **[2025/03/07]** We released `MM-Eureka`.
   - 📖 Paper: [MM-Eureka-paper](https://github.com/ModalMinds/MM-EUREKA/blob/main/MM_Eureka_paper.pdf)
   - 🤗 Model: [MM-Eureka-8B](https://huggingface.co/FanqingM/MM-Eureka-8B) & [MM-Eureka-Zero-38B](https://huggingface.co/FanqingM/MM-Eureka-Zero-38B)
   - 📊 Dataset: [MM-Eureka-Dataset](https://huggingface.co/datasets/FanqingM/MM-Eureka-Dataset)
+  - 🚀Code: [MM-Eureka-Code](https://github.com/ModalMinds/MM-EUREKA/tree/internvl)
 
 ## 🚀 Features
 
