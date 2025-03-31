@@ -20,7 +20,7 @@ class Qwen2_5_VLDataProcessor(BaseDataProcessor):
         messages = self._format_messages(messages)
         processor = self.processor
         texts = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        image_inputs, video_inputs = process_vision_info(messages)
+        image_inputs, video_inputs, video_kwargs = process_vision_info(messages, return_video_kwargs=True)
 
         batch = processor(
             text=texts,
@@ -31,6 +31,7 @@ class Qwen2_5_VLDataProcessor(BaseDataProcessor):
             add_special_tokens=add_special_tokens,
             truncation=truncation,
             return_tensors=return_tensors,
+            **video_kwargs,
         )
         if device:
             return {k: v.to(device) for k, v in batch.items()}
