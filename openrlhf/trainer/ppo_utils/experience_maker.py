@@ -289,7 +289,7 @@ class NaiveExperienceMaker(ABC):
             experience.kl = None
             del experience.info["num_actions"]
             experience.to_device("cpu")
-        return experiences, accuracy_rewards_original
+        return experiences, accuracy_rewards_original.item()
 
     @torch.no_grad()
     def generate_samples(self, all_prompts: List[str], all_labels, **generate_kwargs) -> List[Samples]:
