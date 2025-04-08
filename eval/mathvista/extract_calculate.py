@@ -146,10 +146,6 @@ Then extract the answer from the model response and type it at the end of the pr
 """
     question = question_data["question"]
     response = str(question_data["response"])
-    if '<answer>' in response:
-        response = response.split('<answer>')[-1]
-    else:
-        response = response
     prompt = task_description
     examples = get_gpt4_ICE()
     for example in examples:

@@ -2,15 +2,17 @@ import argparse
 import json
 import os
 import random
-import re
 import time
 
 from datasets import load_dataset
+from qwen_vl_utils import process_vision_info
 from tqdm import tqdm
-from transformers import AutoTokenizer
+from transformers import AutoProcessor
 from vllm import LLM, SamplingParams
 
 ds_collections = {"OlympiadBench": {"root": "Hothan/OlympiadBench", "split": "OE_MM_maths_en_COMP"}}
+
+SYSTEM_PROMPT = "Solve the question. The user asks a question, and you solves it. You first thinks about the reasoning process in the mind and then provides the user with the answer. The answer is in latex format and wrapped in $...$. The final answer must be wrapped using the \\\\boxed{} command. The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> Since $1+1=2$, so the answer is $2$. </think><answer> The answer is $\\\\boxed{2}$ </answer>, which means assistant's output should start with <think> and end with </answer>."
 
 
 def evaluate_chat_model():
@@ -24,55 +26,36 @@ def evaluate_chat_model():
         )["train"]
         inputs = []
         for idx, data_item in tqdm(enumerate(data)):
-            data_item["query"] = re.sub(r"<image_\d+>", "<image>", data_item["question"])
-            if args.prompt_template == "original":
-                messages = [
-                    {
-                        "role": "system",
-                        "content": "你是书生·万象，英文名是InternVL，是由上海人工智能实验室、清华大学及多家合作单位联合开发的多模态大语言模型。",
-                    },
-                    {"role": "user", "content": data_item["query"]},
-                ]
-            elif args.prompt_template == "reasoning_instruct":
-                messages = [
-                    {
-                        "role": "system",
-                        "content": "你是书生·万象，英文名是InternVL，是由上海人工智能实验室、清华大学及多家合作单位联合开发的多模态大语言模型。",
-                    },
-                    {
-                        "role": "user",
-                        "content": "You should first thinks about the reasoning process in the mind and then provides the user with the answer. Your answer must be in latex format and wrapped in $...$.The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> Since $1+1=2$, so the answer is $2$. </think><answer> $2$ </answer>, which means your output should start with <think> and end with </answer>.\n"
-                        + data_item["query"],
-                    },
-                ]
-            elif args.prompt_template == "reasoning_pretrain":
-                messages = [
-                    {
-                        "role": "system",
-                        "content": "A conversation between User and Assistant. The user asks a question, and the Assistant solves it. The assistant first thinks about the reasoning process in the mind and then provides the user with the answer. The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> reasoning process here </think> <answer> answer here </answer>.",
-                    },
-                    {
-                        "role": "user",
-                        "content": f"Answer the following question: {data_item['query']}\nPlease reason step by step, and put your final answer within \\boxed{{}}.",
-                    },
-                ]
-            else:
-                raise ValueError(f"Invalid prompt template: {args.prompt_template}")
-            prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            images_content = []
             if "image_1" in data_item:
-                image = []
                 for i in range(1, 6):
                     if data_item[f"image_{i}"]:
-                        image.append(data_item[f"image_{i}"])
+                        images_content.append({"type": "image", "image": data_item[f"image_{i}"]})
 
-                inputs.append(
-                    {
-                        "prompt": prompt,
-                        "multi_modal_data": {"image": image},
-                    }
-                )
-            else:
-                inputs.append({"prompt": prompt})
+            messages = [
+                {
+                    "role": "system",
+                    "content": [
+                        {"type": "text", "text": SYSTEM_PROMPT},
+                    ],
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        *images_content,
+                        {"type": "text", "text": data_item["question"]},
+                    ],
+                },
+            ]
+            prompt = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            image_data, _ = process_vision_info(messages)
+
+            inputs.append(
+                {
+                    "prompt": prompt,
+                    "multi_modal_data": {"image": image_data},
+                }
+            )
 
         sampling_params = SamplingParams(temperature=0.0, max_tokens=4096, stop_token_ids=stop_token_ids)
         model_outputs = llm.generate(inputs, sampling_params=sampling_params)
@@ -102,7 +85,7 @@ def evaluate_chat_model():
 
         cmd = f"python olympiadbench/extract_calculate.py --output_file {results_file}"
         print(cmd)
-        os.system(cmd)
+        # os.system(cmd)
 
 
 if __name__ == "__main__":
@@ -111,12 +94,6 @@ if __name__ == "__main__":
     parser.add_argument("--datasets", type=str, default="")
     parser.add_argument("--out-dir", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument(
-        "--prompt_template",
-        type=str,
-        choices=["original", "reasoning_instruct", "reasoning_pretrain"],
-        default="original",
-    )
     args = parser.parse_args()
 
     if not os.path.exists(args.out_dir):
@@ -126,8 +103,7 @@ if __name__ == "__main__":
     print("datasets:", args.datasets)
 
     llm = LLM(model=args.checkpoint, trust_remote_code=True, tensor_parallel_size=8, limit_mm_per_prompt={"image": 8})
-    tokenizer = AutoTokenizer.from_pretrained(args.checkpoint, trust_remote_code=True)
-    stop_tokens = ["<|im_end|>\n".strip()]
-    stop_token_ids = [tokenizer.convert_tokens_to_ids(i) for i in stop_tokens]
+    processor = AutoProcessor.from_pretrained(args.checkpoint, trust_remote_code=True)
+    stop_token_ids = None
 
     evaluate_chat_model()
