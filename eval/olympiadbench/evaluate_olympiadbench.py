@@ -10,7 +10,12 @@ from tqdm import tqdm
 from transformers import AutoProcessor
 from vllm import LLM, SamplingParams
 
-ds_collections = {"OlympiadBench": {"root": "Hothan/OlympiadBench", "split": "OE_MM_maths_en_COMP"}}
+ds_collections = {
+    "OE_MM_maths_en_COMP": {"root": "Hothan/OlympiadBench", "split": "OE_MM_maths_en_COMP"},
+    "OE_MM_physics_en_COMP": {"root": "Hothan/OlympiadBench", "split": "OE_MM_physics_en_COMP"},
+    "OE_TO_maths_en_COMP": {"root": "Hothan/OlympiadBench", "split": "OE_TO_maths_en_COMP"},
+    "OE_TO_physics_en_COMP": {"root": "Hothan/OlympiadBench", "split": "OE_TO_physics_en_COMP"},
+}
 
 SYSTEM_PROMPT = "Solve the question. The user asks a question, and you solves it. You first thinks about the reasoning process in the mind and then provides the user with the answer. The answer is in latex format and wrapped in $...$. The final answer must be wrapped using the \\\\boxed{} command. The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> Since $1+1=2$, so the answer is $2$. </think><answer> The answer is $\\\\boxed{2}$ </answer>, which means assistant's output should start with <think> and end with </answer>."
 
@@ -50,12 +55,19 @@ def evaluate_chat_model():
             prompt = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             image_data, _ = process_vision_info(messages)
 
-            inputs.append(
-                {
-                    "prompt": prompt,
-                    "multi_modal_data": {"image": image_data},
-                }
-            )
+            if image_data:
+                inputs.append(
+                    {
+                        "prompt": prompt,
+                        "multi_modal_data": {"image": image_data},
+                    }
+                )
+            else:
+                inputs.append(
+                    {
+                        "prompt": prompt,
+                    }
+                )
 
         sampling_params = SamplingParams(temperature=0.0, max_tokens=4096, stop_token_ids=stop_token_ids)
         model_outputs = llm.generate(inputs, sampling_params=sampling_params)
@@ -91,7 +103,11 @@ def evaluate_chat_model():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=str, default="")
-    parser.add_argument("--datasets", type=str, default="")
+    parser.add_argument(
+        "--datasets",
+        type=str,
+        default="OE_MM_maths_en_COMP,OE_MM_physics_en_COMP,OE_TO_maths_en_COMP,OE_TO_physics_en_COMP",
+    )
     parser.add_argument("--out-dir", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
