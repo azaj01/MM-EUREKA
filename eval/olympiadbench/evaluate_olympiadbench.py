@@ -97,6 +97,7 @@ def evaluate_chat_model():
             cache_dir=os.path.join(os.getcwd(), "data/OlympiadBench/"),
         )["train"]
         for data_item in split:
+            data_item["source"] = ds_collections[ds_name]["split"]
             data.append(data_item)
 
     inputs = []
