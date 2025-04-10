@@ -3,6 +3,7 @@ import copy as cp
 import json
 import logging
 import os
+import re
 import string
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -145,7 +146,10 @@ Please read the following example.
 Then extract the answer from the model response and type it at the end of the prompt.\n
 """
     question = question_data["question"]
-    response = str(question_data["response"])
+    response = str(question_data["response"]).strip()
+    match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL)
+    if match:
+        response = match.group(1).strip()
     prompt = task_description
     examples = get_gpt4_ICE()
     for example in examples:

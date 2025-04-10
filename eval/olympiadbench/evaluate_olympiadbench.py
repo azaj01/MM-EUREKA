@@ -17,7 +17,73 @@ ds_collections = {
     "OE_TO_physics_en_COMP": {"root": "Hothan/OlympiadBench", "split": "OE_TO_physics_en_COMP"},
 }
 
-SYSTEM_PROMPT = "Solve the question. The user asks a question, and you solves it. You first thinks about the reasoning process in the mind and then provides the user with the answer. The answer is in latex format and wrapped in $...$. The final answer must be wrapped using the \\\\boxed{} command. The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> Since $1+1=2$, so the answer is $2$. </think><answer> The answer is $\\\\boxed{2}$ </answer>, which means assistant's output should start with <think> and end with </answer>."
+SYSTEM_PROMPT_32B = "Solve the question. The user asks a question, and you solves it. You first thinks about the reasoning process in the mind and then provides the user with the answer. The answer is in latex format and wrapped in $...$. The final answer must be wrapped using the \\\\boxed{} command. Th answer should be enclosed within <answer> </answer> tags, i.e., Since $1+1=2$, so the answer is $2$. <answer> The answer is $\\\\boxed{2}$ </answer>, which means the final answer assistant's output should start with <answer> and end with </answer>."
+SYSTEM_PROMPT_7B = "Solve the question. The user asks a question, and you solves it. You first thinks about the reasoning process in the mind and then provides the user with the answer. The answer is in latex format and wrapped in $...$. The final answer must be wrapped using the \\\\boxed{} command. Th answer should be enclosed within <answer> </answer> tags, i.e., Since $1+1=2$, so the answer is $2$. <answer> The answer is $\\\\boxed{2}$ </answer>, which means the final answer assistant's output should start with <answer> and end with </answer>."
+
+
+english_answer_type_dict = {
+    "Numerical": "a numerical value",
+    "Expression": "an expression",
+    "Equation": "an equation",
+    "Interval": "an interval",
+}
+
+
+def build_prompt(data_item):
+    is_math = "maths" in data_item["source"]
+    subject_content = "Math" if is_math else "Physics"
+    if data_item["is_multiple_answer"]:
+        multiple_answer_text = "\\boxed{multiple answers connected with commas}"
+    else:
+        multiple_answer_text = "\\boxed{answer}"
+    unit_text = ""
+    if data_item["unit"]:
+        multiple_answer_text += "(unit)"
+        unit_text = ", note that the unit of the answer should not be included in \\boxed{}"
+    answer_type_text = get_answer_type_text(data_item["answer_type"], multiple_answer=data_item["is_multiple_answer"])
+    prompt = (
+        f"The following is an open-ended problem from an International {subject_content} competition. "
+        f"{answer_type_text}Please calculate the answer according to the given requirements and "
+        "the information provided. Please use LaTeX format to represent the variables and formulas "
+        'used in the solution process and results. Please end your solution with "So the final answer '
+        f'is {multiple_answer_text}." and give the result explicitly{unit_text}.'
+    )
+
+
+def get_answer_type_text(answer_type, multiple_answer):
+    # 'Tuple' has various meanings in different context, such as position or values of a series of variable,
+    # so it may lead to confusion to directly use 'tuple' in the prompt.
+    if ("Need_human_evaluate" in answer_type) or ("Tuple" in answer_type):
+        full_answer_text = ""
+    else:
+        if not multiple_answer:
+            answer_text = get_single_answer_type_text(answer_type)
+            full_answer_text = f"The answer of The problem should be {answer_text}. "
+        else:
+            if "," not in answer_type:  # Same answer type for all answers
+                answer_text = get_single_answer_type_text(answer_type)
+                full_answer_text = f"The problem has multiple answers, each of them should be {answer_text}. "
+            else:
+                answer_types = answer_type.split(",")
+                answer_types = [get_single_answer_type_text(t) for t in answer_types]
+                if len(set(answer_types)) == 1:
+                    answer_text = answer_types[0]
+                    full_answer_text = f"The problem has multiple answers, each of them should be {answer_text}. "
+                else:
+                    answer_text = ", ".join(answer_types)
+                    full_answer_text = (
+                        f"The problem has multiple answers, with the answers in order being {answer_text}. "
+                    )
+    return full_answer_text
+
+
+def get_single_answer_type_text(answer_type):
+    if "-" in answer_type:  # No need now
+        answer_type = answer_type[: answer_type.find("-")]
+    for t in ["Numerical", "Expression", "Equation", "Interval"]:
+        if t in answer_type:
+            return english_answer_type_dict[t]
+    exit(f"Error parsing answer type {answer_type}!")
 
 
 def evaluate_chat_model():
@@ -41,14 +107,14 @@ def evaluate_chat_model():
                 {
                     "role": "system",
                     "content": [
-                        {"type": "text", "text": SYSTEM_PROMPT},
+                        {"type": "text", "text": SYSTEM_PROMPT_32B},
                     ],
                 },
                 {
                     "role": "user",
                     "content": [
                         *images_content,
-                        {"type": "text", "text": data_item["question"]},
+                        {"type": "text", "text": build_prompt(data_item)},
                     ],
                 },
             ]

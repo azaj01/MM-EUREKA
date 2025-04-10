@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import openai
@@ -45,7 +46,13 @@ Solution:
 """
     question = question_data["question"]
     answer = "\n".join(question_data["final_answer"])
-    response = str(question_data["response"])
+    response = str(question_data["response"]).strip()
+    match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL)
+    if match:
+        response = match.group(1).strip()
+    match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL)
+    if match:
+        response = match.group(1).strip()
     prompt = prompt.format(question=question, answer=answer, solution=response)
     return prompt
 
