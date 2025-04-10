@@ -89,81 +89,85 @@ def get_single_answer_type_text(answer_type):
 def evaluate_chat_model():
     random.seed(args.seed)
 
+    data = []
     for ds_name in args.datasets:
-        data = load_dataset(
+        split = load_dataset(
             ds_collections[ds_name]["root"],
             ds_collections[ds_name]["split"],
             cache_dir=os.path.join(os.getcwd(), "data/OlympiadBench/"),
         )["train"]
-        inputs = []
-        for idx, data_item in tqdm(enumerate(data)):
-            images_content = []
-            if "image_1" in data_item:
-                for i in range(1, 6):
-                    if data_item[f"image_{i}"]:
-                        images_content.append({"type": "image", "image": data_item[f"image_{i}"]})
+        for data_item in split:
+            data.append(data_item)
 
-            messages = [
+    inputs = []
+    for idx, data_item in tqdm(enumerate(data)):
+        images_content = []
+        if "image_1" in data_item:
+            for i in range(1, 6):
+                if data_item[f"image_{i}"]:
+                    images_content.append({"type": "image", "image": data_item[f"image_{i}"]})
+
+        messages = [
+            {
+                "role": "system",
+                "content": [
+                    {"type": "text", "text": SYSTEM_PROMPT_32B},
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    *images_content,
+                    {"type": "text", "text": build_prompt(data_item)},
+                ],
+            },
+        ]
+        prompt = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        image_data, _ = process_vision_info(messages)
+
+        if image_data:
+            inputs.append(
                 {
-                    "role": "system",
-                    "content": [
-                        {"type": "text", "text": SYSTEM_PROMPT_32B},
-                    ],
-                },
+                    "prompt": prompt,
+                    "multi_modal_data": {"image": image_data},
+                }
+            )
+        else:
+            inputs.append(
                 {
-                    "role": "user",
-                    "content": [
-                        *images_content,
-                        {"type": "text", "text": build_prompt(data_item)},
-                    ],
-                },
-            ]
-            prompt = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-            image_data, _ = process_vision_info(messages)
+                    "prompt": prompt,
+                }
+            )
 
-            if image_data:
-                inputs.append(
-                    {
-                        "prompt": prompt,
-                        "multi_modal_data": {"image": image_data},
-                    }
-                )
-            else:
-                inputs.append(
-                    {
-                        "prompt": prompt,
-                    }
-                )
+    sampling_params = SamplingParams(temperature=0.0, max_tokens=4096, stop_token_ids=stop_token_ids)
+    model_outputs = llm.generate(inputs, sampling_params=sampling_params)
+    outputs = []
+    for data_item, model_output in zip(data, model_outputs):
+        if "image_1" in data_item:
+            del data_item["image_1"]
+            del data_item["image_2"]
+            del data_item["image_3"]
+            del data_item["image_4"]
+            del data_item["image_5"]
 
-        sampling_params = SamplingParams(temperature=0.0, max_tokens=4096, stop_token_ids=stop_token_ids)
-        model_outputs = llm.generate(inputs, sampling_params=sampling_params)
-        outputs = []
-        for data_item, model_output in zip(data, model_outputs):
-            if "image_1" in data_item:
-                del data_item["image_1"]
-                del data_item["image_2"]
-                del data_item["image_3"]
-                del data_item["image_4"]
-                del data_item["image_5"]
+        data_item["response"] = model_output.outputs[0].text
+        outputs.append(data_item)
 
-            data_item["response"] = model_output.outputs[0].text
-            outputs.append(data_item)
+    temp = {}
+    for data_item in outputs:
+        id = data_item["id"]
+        temp[id] = data_item
 
-        temp = {}
-        for data_item in outputs:
-            id = data_item["id"]
-            temp[id] = data_item
+    print(f"Evaluating {ds_name} ...")
+    time_prefix = time.strftime("%y%m%d%H%M%S", time.localtime())
+    results_file = f"{ds_name}_{time_prefix}.json"
+    output_path = os.path.join(args.out_dir, results_file)
+    json.dump(temp, open(output_path, "w", encoding="utf-8"), indent=4, ensure_ascii=False)
+    print("Results saved to {}".format(output_path))
 
-        print(f"Evaluating {ds_name} ...")
-        time_prefix = time.strftime("%y%m%d%H%M%S", time.localtime())
-        results_file = f"{ds_name}_{time_prefix}.json"
-        output_path = os.path.join(args.out_dir, results_file)
-        json.dump(temp, open(output_path, "w", encoding="utf-8"), indent=4, ensure_ascii=False)
-        print("Results saved to {}".format(output_path))
-
-        cmd = f"python olympiadbench/extract_calculate.py --output_file {results_file}"
-        print(cmd)
-        # os.system(cmd)
+    cmd = f"python olympiadbench/extract_calculate.py --output_file {results_file}"
+    print(cmd)
+    # os.system(cmd)
 
 
 if __name__ == "__main__":
