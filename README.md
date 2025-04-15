@@ -12,8 +12,9 @@
 <div align="center">
 <p align="center">
   📖<a href="https://jagged-court-d9d.notion.site/MM-Eureka-Qwen-1c13cc5a384880ffbd2de24e1dee052d">Report</a> |
-  📊<a href="https://huggingface.co/datasets/FanqingM/MM-Eureka-Dataset">Datasets</a> |
+  📊<a href="https://huggingface.co/datasets/FanqingM/MMK12">MMK12 Datasets & Benchmark</a> |
   🤗<a href="https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B">MM-Eureka-Qwen-7B</a> |
+    🤗<a href="https://huggingface.co/FanqingM/MM-Eureka-Qwen-32B">MM-Eureka-Qwen-32B</a> |
 </p>
 </div>
 
