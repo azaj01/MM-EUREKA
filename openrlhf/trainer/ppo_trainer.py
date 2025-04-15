@@ -273,7 +273,7 @@ class PPOTrainer(ABC):
                 status["hard_counts"] = hard_counts
                 status["easy_counts"] = easy_counts
                 status["mid_counts"] = mid_counts
-                print("=== Accuracy distribution:", " ".join(f"{k:.2f}:{v}" for k, v in accuracy_counts))
+                print("=== Accuracy distribution ===:", " ".join(f"{k:.2f}:{v}" for k, v in accuracy_counts))
                 
                 ## log the entropy for a group of responses
                 joint_action_log_probs_ = torch.cat([(experience.action_log_probs * experience.action_mask).sum(-1) for experience in a])
