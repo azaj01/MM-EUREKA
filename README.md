@@ -12,14 +12,15 @@
 <div align="center">
 <p align="center">
   📖<a href="https://jagged-court-d9d.notion.site/MM-Eureka-Qwen-1c13cc5a384880ffbd2de24e1dee052d">Report</a> |
-  📊<a href="https://huggingface.co/datasets/FanqingM/MM-Eureka-Dataset">Datasets</a> |
+  📊<a href="https://huggingface.co/datasets/FanqingM/MMK12">MMK12 Datasets & Benchmark</a> |
   🤗<a href="https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B">MM-Eureka-Qwen-7B</a> |
+   🤗<a href="https://huggingface.co/FanqingM/MM-Eureka-Qwen-32B">MM-Eureka-Qwen-32B</a> |
 </p>
 </div>
 
 <hr>
 <div align="center">
-<p style="text-align: center;">MM-EUREKA: Exploring Visual Aha Moment with Rule-based Large-scale Reinforcement Learning<p>
+<p style="text-align: center;">MM-EUREKA: EXPLORING THE FRONTIERS OF MULTIMODAL REASONING WITH RULE-BASED REINFORCEMENT LEARNING<p>
 </div>
 <hr>
 <div align="center">
@@ -30,17 +31,24 @@
 
 ## 🎯Overview
 
-We present **MM-Eureka-Qwen**, a multimodal reasoning model that successfully extends large-scale rule-based reinforcement learning (RL) to multimodal reasoning. Compared to the previous version of MM-EUREKA based on InternVL, we have made improvements in model architecture, algorithms, and data. Using only out-of-domain training data, MM-Eureka-Qwen achieves significant improvements over Qwen2.5-VL-Instruct-7B across multiple benchmarks (e.g. MathVista 73.0). 
+We present **MM-Eureka-Qwen-7B** and  **MM-Eureka-Qwen-32B**, both are powerful multimodal reasoning model that successfully extends large-scale rule-based reinforcement learning (RL) to multimodal reasoning. Compared to the previous version of MM-EUREKA based on InternVL, we have made improvements in model architecture, algorithms, and data. For instance, MM-EUREKA-7B achieves **66.1** on MMK12 evaluation sets, only 0.2 points below Intern2.5-VL-78B. On MathVista, it reaches **73.0**, even surpassing InternVL2.5-VL-78B. MM-EUREKA-32B demonstrates stronger performance, scoring **72.3** on MMK12 evaluation sets, which exceeds both Qwen2.5-VL-72B's **70.3** and closed-source models like Gemini2-Flash, ranking second only to o1's **73.9**. On commonly used multimodal mathematical reasoning benchmarks, MM-EUREKA-32B achieves **73.4** on WeMath, outperforming all open-source models and most closed-source models including Claude3.7 Sonnet. On MathVista, it reaches **74.8**, surpassing all open-source and closed-source models. Both variants demonstrate significant improvements in multidisciplinary K12 and mathematical reasoning performance, outperforming most open-source models of similar sizes.
 
 **Core Improvements:**
 
 1. We further iterate the codebase to support algorithms including Online Filter, [ADORA](https://github.com/ShadeCloak/ADORA?tab=readme-ov-file), and [DAPO](https://arxiv.org/abs/2503.14476).
-2. We expand our K12 dataset from MM-EUREKA-Dataaset, from 8k to 15k high-quality K12 samples.
-3. We train the MM-Eureka-Qwen-7B model, achieving better results with significantly lower cost than the previous version.
+2. We open-source self-collected MMK12, which has 15k diverse and high-quality samples and 2k MCQs for Math, Physics, Chemistry, Biology for evaluation.
+3. We train the MM-Eureka-Qwen-7B and MM-Eureka-Qwen-32B, which are the almost top performancer in multimodal reasoning within similar size open-source models. Especially for Multidisciplinary K12 tasks.
 
 🔥We open-source our complete pipeline to foster further research in this area. We release all our codes, models, data, etc. at [MM-EUREKA-Qwen](https://github.com/ModalMinds/MM-EUREKA/tree/qwen).
 
 ## 🗞️ News
+
+- **[2025/04/15]** We released `MM-Eureka-Qwen-7B` , `MM-Eureka-Qwen-32B` and `MMK12`.
+  - 📖 Report: [MM-Eureka-Qwen-Report](https://jagged-court-d9d.notion.site/MM-Eureka-Qwen-1c13cc5a384880ffbd2de24e1dee052d) 
+  - 🤗 Model: [MM-Eureka-Qwen-7B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B)
+  - 🤗 Model: [MM-Eureka-Qwen-32B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-32B)
+  - 📊 Dataset: [MMK12](https://huggingface.co/datasets/FanqingM/MMK12)
+  - 🚀Code: [MM-Eureka-Qwen-Code](https://github.com/ModalMinds/MM-EUREKA/tree/qwen)
 
 - **[2025/03/27]** We released `MM-Eureka-Qwen`.
   - 📖 Report: [MM-Eureka-Qwen-Report](https://jagged-court-d9d.notion.site/MM-Eureka-Qwen-1c13cc5a384880ffbd2de24e1dee052d) 
