@@ -263,7 +263,7 @@ class PPOTrainer(ABC):
 
 
                 ## log acc change
-                accuracy_ = torch.cat([experience.info["accuracy_reward"] for experience in a])
+                accuracy_ = torch.cat([experience.info["accuracy_reward"] for experience in experiences])
                 accuracy_ = accuracy_.reshape(-1, args.n_samples_per_prompt).to(device="cuda")
                 accuracy_ = torch.mean(accuracy_, dim=-1)
                 accuracy_counts = sorted(Counter(accuracy_.tolist()).items())
@@ -276,7 +276,7 @@ class PPOTrainer(ABC):
                 print("=== Accuracy distribution ===:", " ".join(f"{k:.2f}:{v}" for k, v in accuracy_counts))
                 
                 ## log the entropy for a group of responses
-                joint_action_log_probs_ = torch.cat([(experience.action_log_probs * experience.action_mask).sum(-1) for experience in a])
+                joint_action_log_probs_ = torch.cat([(experience.action_log_probs * experience.action_mask).sum(-1) for experience in experiences])
                 status["entropy_per_prompt"] = -joint_action_log_probs_.mean().item()
 
                 
