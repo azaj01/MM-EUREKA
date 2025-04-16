@@ -44,7 +44,7 @@ We present **MM-Eureka-Qwen-7B** and  **MM-Eureka-Qwen-32B**, both are powerful 
 ## 🗞️ News
 
 - **[2025/04/15]** We released `MM-Eureka-Qwen-7B` , `MM-Eureka-Qwen-32B` and `MMK12`.
-  - 📖 Report: [MM-Eureka-Qwen-Report](https://jagged-court-d9d.notion.site/MM-Eureka-Qwen-1c13cc5a384880ffbd2de24e1dee052d) 
+  - 📖 Report: [MM-Eureka-Qwen-Report](https://github.com/ModalMinds/MM-EUREKA/blob/qwen/MM_EUREKA_Tech_Report.pdf) 
   - 🤗 Model: [MM-Eureka-Qwen-7B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B)
   - 🤗 Model: [MM-Eureka-Qwen-32B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-32B)
   - 📊 Dataset: [MMK12](https://huggingface.co/datasets/FanqingM/MMK12)
@@ -98,6 +98,7 @@ Finally, MM-EUREKA-Qwen achieves 73.0 on MathVista, surpassing the original Qwen
 | MM-EUREKA-Qwen-7B           | Qwen2.5-VL-7B-Instruct     | **73.0 (+4.8)** | **50.3 (+2.4)** | 26.9 (+1.5) | 25.3（+10.0） | **48.6 (+12.6)** |
 
 - 🤗 [MM-Eureka-Qwen-7B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B)
+- 🤗 [MM-Eureka-Qwen-32B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-32B)
 
 ## 🏁 Getting Started
 
