@@ -1,8 +1,8 @@
 import os
 import os.path
 from abc import ABC
-from typing import Any, Callable, Dict, List, Optional
 from collections import Counter
+from typing import Any, Callable, Dict, List, Optional
 
 import torch
 import torch.distributed as dist
@@ -261,9 +261,8 @@ class PPOTrainer(ABC):
                 else:
                     status = {}
 
-
                 ## log acc change
-                accuracy_ = torch.cat([experience.info["accuracy_reward"] for experience in experiences])
+                accuracy_ = torch.cat([experience.info["accuracy_rewards"] for experience in experiences])
                 accuracy_ = accuracy_.reshape(-1, args.n_samples_per_prompt).to(device="cuda")
                 accuracy_ = torch.mean(accuracy_, dim=-1)
                 accuracy_counts = sorted(Counter(accuracy_.tolist()).items())
@@ -274,12 +273,13 @@ class PPOTrainer(ABC):
                 status["easy_counts"] = easy_counts
                 status["mid_counts"] = mid_counts
                 print("=== Accuracy distribution ===:", " ".join(f"{k:.2f}:{v}" for k, v in accuracy_counts))
-                
+
                 ## log the entropy for a group of responses
-                joint_action_log_probs_ = torch.cat([(experience.action_log_probs * experience.action_mask).sum(-1) for experience in experiences])
+                joint_action_log_probs_ = torch.cat(
+                    [(experience.action_log_probs * experience.action_mask).sum(-1) for experience in experiences]
+                )
                 status["entropy_per_prompt"] = -joint_action_log_probs_.mean().item()
 
-                
                 status["accuracy_rewards_original"] = accuracy_rewards_original
 
                 if "kl" in status:
@@ -496,8 +496,7 @@ class PPOTrainer(ABC):
         self.strategy.optimizer_step(self.actor_optim, self.actor, self.actor_scheduler, name="actor")
         if self.ema_model:
             self.strategy.moving_average(self.actor, self.ema_model, self.ema_beta, "cuda")
-        
-        
+
         ## compute the ratio and grad_norm to log
         with torch.no_grad():
             ratio = (action_log_probs - old_action_log_probs).exp().detach()
@@ -505,29 +504,26 @@ class PPOTrainer(ABC):
             eps = 0.2
             ratio_clip_upper = masked_mean((ratio > 1 + eps), experience.action_mask, dim=-1).mean()
             ratio_clip_lower = masked_mean((ratio < 1 - eps), experience.action_mask, dim=-1).mean()
-            
-            grad_norm = nn.utils.clip_grad_norm_(
-                self.actor.parameters(), 
-                max_norm=1e6,
-                norm_type=2
-            )
-            
-            correct_response_length = (experience.info["response_length"] * experience.info["accuracy_reward"]).sum() / (experience.info["accuracy_reward"].sum()).clamp(min=1.0)
-            wrong_response_length = (experience.info["response_length"] * (1 - experience.info["accuracy_reward"])).sum() / ((1 - experience.info["accuracy_reward"]).sum()).clamp(min=1.0)
 
+            grad_norm = nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1e6, norm_type=2)
+
+            correct_response_length = (
+                experience.info["response_length"] * experience.info["accuracy_rewards"]
+            ).sum() / (experience.info["accuracy_rewards"].sum()).clamp(min=1.0)
+            wrong_response_length = (
+                experience.info["response_length"] * (1 - experience.info["accuracy_rewards"])
+            ).sum() / ((1 - experience.info["accuracy_rewards"]).sum()).clamp(min=1.0)
 
         # status
         status = {"policy_loss": actor_loss.item(), "actor_lr": self.actor_scheduler.get_last_lr()[0]}
-
 
         status["ratio"] = ratio_mean.item()
         status["ratio_clip_upper"] = ratio_clip_upper.item()
         status["ratio_clip_lower"] = ratio_clip_lower.item()
         status["grad_norm"] = grad_norm.item()
-        
+
         status["correct_response_length"] = correct_response_length.item()
         status["wrong_response_length"] = wrong_response_length.item()
-
 
         if self.pretrain_dataloader is not None:
             status["ptx_loss"] = ptx_loss.item()
