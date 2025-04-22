@@ -114,7 +114,7 @@ pip install flash_attn --no-build-isolation
 
 ### 📂 Data Preparation
 
-You can download our training data from [MM-Eureka-Dataset](https://huggingface.co/datasets/FanqingM/MM-Eureka-Dataset)
+You can download our training data from [MMK12](https://huggingface.co/datasets/FanqingM/MMK12)
 
 Once downloaded, refer to the section below for additional data formation.
 
