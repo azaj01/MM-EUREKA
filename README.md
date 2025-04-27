@@ -87,8 +87,6 @@ Based on the key factors identified by https://github.com/ModalMinds/MM-EUREKA f
 - The data filtering strategy was transitioned from an offline approach to an online approach.
 - Additional data from the K12 dataset was collected, expanding the total dataset size to 15,000 samples.
 
-Finally, MM-EUREKA-Qwen achieves 73.0 on MathVista, surpassing the original Qwen2.5-VL-7B-Instruct by 4.8%.
-
 | Model                  | MathVista | MathVerse | MathVision | OlympiadBench | WeMath | MMK12 |
 |------------------------|-----------|-----------|------------|---------------|--------|-------|
 | Claude3.7-Sonnet       | 66.8      | 52.0      | 41.3       | 48.9          | 72.6   | 55.3  |
