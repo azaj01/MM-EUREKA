@@ -3,12 +3,14 @@ import copy as cp
 import json
 import logging
 import os
+import re
 import string
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import openai
 import pandas as pd
+import regex
 from latex2sympy2 import latex2sympy
 from tabulate import tabulate
 
@@ -174,6 +176,14 @@ Then extract the answer from the model response and type it at the end of the pr
             options = f"(A) {question_data['options'][0]}\n(B) {question_data['options'][1]}\n(C) {question_data['options'][2]}\n(D) {question_data['options'][3]}\n(E) {question_data['options'][4]}\n"
     question = f"{question_data['question']}\n{options}"
     response = str(question_data["response"])
+    match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL)
+    if match:
+        response = match.group(1).strip()
+    else:
+        completion_match = regex.findall(
+            r"\\boxed\{((?:[^{}]+|(?P<BRACES>\{(?:[^{}]+|(?P>BRACES))*\}))*)\}", response, re.DOTALL
+        )
+        response = completion_match[-1][0].strip() if completion_match else response
     prompt = task_description
     examples = get_gpt4_ICE()
     for example in examples:

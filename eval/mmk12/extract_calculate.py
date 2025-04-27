@@ -28,26 +28,26 @@ def get_chat_response(prompt, model="gpt-4o", max_token=256, retry=5):
     return "no"
 
 
-def build_olympiadbench_gpt4_prompt(question_data):
-    prompt = """You are given a question, a solution and the correct answer. Please determine if the solution matches the correct answer.
-Focus only on the mathematical or semantic correctness of the content. Ignore any differences in formatting, such as LaTeX syntax, symbols, styles, or additional wrappers (e.g., \boxed, $...$, or similar). Compare only the core mathematical or textual meaning of the solution and the correct answer.
-The process or reasoning leading to the Solution is irrelevant, ONLY the correctness of the result matters.
-Return only "Yes" if the solution is correct or "No" if it is incorrect.
+def build_zh_exam_k12_gpt4_prompt(question_data):
+    prompt = """You are given a question, the correct answer and a model's answer. Please determine if the model's answer matches the correct answer.
+Focus only on the mathematical or semantic correctness of the content. Ignore any differences in formatting, such as LaTeX syntax, symbols, styles, or additional wrappers (e.g., \\boxed, $...$, or similar). Compare only the core mathematical or textual meaning of the model's answer and the correct answer.
+Only the correctness of the model's answer matters.
+Return only "Yes" if the model's answer is correct or "No" if it is incorrect.
 Only return "Yes" or "No" with no additional text or formatting.
 
-Question: 
+Question:
 {question}
 --------------------------------
 Correct Answer:
 {answer}
 --------------------------------
-Solution: 
+Model's Answer:
 {solution}
 --------------------------------
 """
     question = question_data["question"]
-    answer = "\n".join(question_data["final_answer"])
-    response = str(question_data["response"]).strip()
+    answer = question_data["answer"]
+    response = str(question_data["response"])
     match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL)
     if match:
         response = match.group(1).strip()
@@ -56,12 +56,13 @@ Solution:
             r"\\boxed\{((?:[^{}]+|(?P<BRACES>\{(?:[^{}]+|(?P>BRACES))*\}))*)\}", response, re.DOTALL
         )
         response = completion_match[-1][0].strip() if completion_match else response
+
     prompt = prompt.format(question=question, answer=answer, solution=response)
     return prompt
 
 
 def score_answer(response, problem):
-    prompt = build_olympiadbench_gpt4_prompt(problem)
+    prompt = build_zh_exam_k12_gpt4_prompt(problem)
     logging.info(f"id: {problem['id']}")
     completion = get_chat_response(prompt)
     if completion.lower() == "yes":
@@ -70,7 +71,7 @@ def score_answer(response, problem):
         return False, problem["id"]
 
 
-def OlympiadBench_acc(results):
+def ZhExamK12_acc(results):
     correct = 0
     total = len(results)
     for result in results:
@@ -114,14 +115,14 @@ if __name__ == "__main__":
 
         for future in as_completed(futures):
             score, id = future.result()
-            results[str(id)]["score"] = score
+            results[id]["score"] = score
 
     print(f"Saving results to {output_file}...")
     json.dump(results, open(output_file, "w"), indent=4, ensure_ascii=False)
     print(f"Results saved.")
 
     results = [v for _, v in results.items()]
-    scores = OlympiadBench_acc(results)
+    scores = ZhExamK12_acc(results)
     print(scores)
     print(f"Saving scores to {result_file.replace('.json', f'_score.json')}...")
     json.dump(scores, open(result_file.replace(".json", f"_score.json"), "w"), indent=4, ensure_ascii=False)

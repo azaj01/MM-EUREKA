@@ -6,11 +6,15 @@ import time
 
 from datasets import load_dataset
 from qwen_vl_utils import process_vision_info
-from tqdm import tqdm
 from transformers import AutoProcessor
 from vllm import LLM, SamplingParams
 
-ds_collections = {"MathVision_test": {"root": "MathLLMs/MathVision", "split": "test"}}
+ds_collections = {
+    "MMK12": {
+        "root": "FanqingM/MMK12",
+        "split": "test",
+    }
+}
 
 SYSTEM_PROMPT_32B = "Solve the question. The user asks a question, and you solves it. You first thinks about the reasoning process in the mind and then provides the user with the answer. The answer is in latex format and wrapped in $...$. The final answer must be wrapped using the \\\\boxed{} command. Th answer should be enclosed within <answer> </answer> tags, i.e., Since $1+1=2$, so the answer is $2$. <answer> The answer is $\\\\boxed{2}$ </answer>, which means the final answer assistant's output should start with <answer> and end with </answer>."
 SYSTEM_PROMPT_7B = "Solve the question. The user asks a question, and you solves it. You first thinks about the reasoning process in the mind and then provides the user with the answer. The answer is in latex format and wrapped in $...$. The final answer must be wrapped using the \\\\boxed{} command. The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> Since $1+1=2$, so the answer is $2$. </think><answer> The answer is $\\\\boxed{2}$ </answer>, which means assistant's output should start with <think> and end with </answer>."
@@ -20,19 +24,15 @@ def evaluate_chat_model():
     random.seed(args.seed)
 
     for ds_name in args.datasets:
-        data = load_dataset(ds_collections[ds_name]["root"], cache_dir=os.path.join(os.getcwd(), "data/MathVision/"))[
+        data = load_dataset(ds_collections[ds_name]["root"], cache_dir=os.path.join(os.getcwd(), "data/MMK12/"))[
             ds_collections[ds_name]["split"]
         ]
 
         inputs = []
-        for idx, data_item in tqdm(enumerate(data)):
-            options = ""
-            if len(data_item["options"]) > 0:
-                assert len(data_item["options"]) == 5, data_item
-                if "".join(data_item["options"]) != "ABCDE":
-                    options = f"(A) {data_item['options'][0]}\n(B) {data_item['options'][1]}\n(C) {data_item['options'][2]}\n(D) {data_item['options'][3]}\n(E) {data_item['options'][4]}\n"
-            data_item["query"] = f"{data_item['question']}\n{options}"
-            image = data_item["decoded_image"]
+        for data_item in data:
+            data_item["query"] = data_item["question"]
+            image = data_item["image"]
+
             messages = [
                 {
                     "role": "system",
@@ -62,7 +62,7 @@ def evaluate_chat_model():
         model_outputs = llm.generate(inputs, sampling_params=sampling_params)
         outputs = []
         for data_item, model_output in zip(data, model_outputs):
-            del data_item["decoded_image"]
+            del data_item["image"]
             data_item["response"] = model_output.outputs[0].text
             outputs.append(data_item)
 
@@ -78,7 +78,7 @@ def evaluate_chat_model():
         json.dump(temp, open(output_path, "w", encoding="utf-8"), indent=4, ensure_ascii=False)
         print("Results saved to {}".format(output_path))
 
-        cmd = f"python mathvision/extract_calculate.py --output_file {results_file}"
+        cmd = f"python eval/mmk12/extract_calculate.py --output_file {results_file}"
         print(cmd)
         # os.system(cmd)
 
@@ -86,7 +86,7 @@ def evaluate_chat_model():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=str, default="")
-    parser.add_argument("--datasets", type=str, default="MathVerse_testmini")
+    parser.add_argument("--datasets", type=str, default="math_tiankong_test")
     parser.add_argument("--out-dir", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
@@ -95,6 +95,7 @@ if __name__ == "__main__":
         os.makedirs(args.out_dir)
 
     args.datasets = args.datasets.split(",")
+
     print("datasets:", args.datasets)
 
     llm = LLM(

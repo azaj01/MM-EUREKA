@@ -2,11 +2,13 @@ import argparse
 import json
 import logging
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pprint import pprint
 
 import openai
 import pandas as pd
+import regex
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -109,6 +111,14 @@ def build_mathverse_gpt4_extract_prompt(question_data):
 I am providing you a response from a model to a math problem, termed 'Model Response'. You should extract the answer from the response as 'Extracted Answer'. Directly output the extracted answer with no explanation.\n\n
 """  # noqa
     response = str(question_data["response"])
+    match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL)
+    if match:
+        response = match.group(1).strip()
+    else:
+        completion_match = regex.findall(
+            r"\\boxed\{((?:[^{}]+|(?P<BRACES>\{(?:[^{}]+|(?P>BRACES))*\}))*)\}", response, re.DOTALL
+        )
+        response = completion_match[-1][0].strip() if completion_match else response
     demo_prompt = task_description
     examples = get_gpt4_extract_ICE()
     for example in examples:

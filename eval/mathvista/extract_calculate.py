@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import openai
 import pandas as pd
+import regex
 from tabulate import tabulate
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -150,6 +151,11 @@ Then extract the answer from the model response and type it at the end of the pr
     match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL)
     if match:
         response = match.group(1).strip()
+    else:
+        completion_match = regex.findall(
+            r"\\boxed\{((?:[^{}]+|(?P<BRACES>\{(?:[^{}]+|(?P>BRACES))*\}))*)\}", response, re.DOTALL
+        )
+        response = completion_match[-1][0].strip() if completion_match else response
     prompt = task_description
     examples = get_gpt4_ICE()
     for example in examples:

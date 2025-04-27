@@ -14,7 +14,7 @@
   📖<a href="https://github.com/ModalMinds/MM-EUREKA/blob/qwen/MM_EUREKA_Tech_Report.pdf">Report</a> |
   📊<a href="https://huggingface.co/datasets/FanqingM/MMK12">MMK12 Datasets & Benchmark</a> |
   🤗<a href="https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B">MM-Eureka-Qwen-7B</a> |
-   🤗<a href="https://huggingface.co/FanqingM/MM-Eureka-Qwen-32B">MM-Eureka-Qwen-32B</a> |
+   🤗<a href="https://huggingface.co/FanqingM/MM-Eureka-Qwen-32B">MM-Eureka-Qwen-32B</a>
 </p>
 </div>
 
@@ -31,27 +31,27 @@
 
 ## 🎯Overview
 
-We present **MM-Eureka-Qwen-7B** and  **MM-Eureka-Qwen-32B**, both are powerful multimodal reasoning model that successfully extends large-scale rule-based reinforcement learning (RL) to multimodal reasoning. Compared to the previous version of MM-EUREKA based on InternVL, we have made improvements in model architecture, algorithms, and data. For instance, MM-EUREKA-7B achieves **66.1** on MMK12 evaluation sets, only 0.2 points below Intern2.5-VL-78B. On MathVista, it reaches **73.0**, even surpassing InternVL2.5-VL-78B. MM-EUREKA-32B demonstrates stronger performance, scoring **72.3** on MMK12 evaluation sets, which exceeds both Qwen2.5-VL-72B's **70.3** and closed-source models like Gemini2-Flash, ranking second only to o1's **73.9**. On commonly used multimodal mathematical reasoning benchmarks, MM-EUREKA-32B achieves **73.4** on WeMath, outperforming all open-source models and most closed-source models including Claude3.7 Sonnet. On MathVista, it reaches **74.8**, surpassing all open-source and closed-source models. Both variants demonstrate significant improvements in multidisciplinary K12 and mathematical reasoning performance, outperforming most open-source models of similar sizes.
+We present **MM-Eureka-Qwen-7B** and **MM-Eureka-Qwen-32B**, both are powerful multimodal reasoning models that successfully extend large-scale rule-based reinforcement learning (RL) to multimodal reasoning. Compared to the previous version of MM-EUREKA based on InternVL, we have made improvements in model architecture, algorithms, and data. For instance, MM-Eureka-Qwen-7B achieves **66.1** on MMK12 evaluation sets, only 0.2 points below InternVL-2.5-78B. On MathVista(testmini), it reaches **73.0**, even surpassing InternVLVL-2.5-78B. MM-Eureka-Qwen-32B demonstrates stronger performance, scoring **72.3** on MMK12 evaluation sets, which exceeds both Qwen2.5-VL-72B's **70.3** and closed-source models like Gemini2-Flash, ranking second only to o1's **73.9**. On commonly used multimodal mathematical reasoning benchmarks, MM-Eureka-Qwen-32B achieves **73.4** on WeMath, outperforming all open-source models and most closed-source models including Claude3.7 Sonnet. On MathVista, it reaches **74.8**, surpassing all open-source and closed-source models. Both variants demonstrate significant improvements in multidisciplinary K12 and mathematical reasoning performance, outperforming most open-source models of similar sizes.
 
 **Core Improvements:**
 
 1. We further iterate the codebase to support algorithms including Online Filter, [ADORA](https://github.com/ShadeCloak/ADORA?tab=readme-ov-file), and [DAPO](https://arxiv.org/abs/2503.14476).
 2. We open-source self-collected MMK12, which has 15k diverse and high-quality samples and 2k MCQs for Math, Physics, Chemistry, Biology for evaluation.
-3. We train the MM-Eureka-Qwen-7B and MM-Eureka-Qwen-32B, which are the almost top performancer in multimodal reasoning within similar size open-source models. Especially for Multidisciplinary K12 tasks.
+3. We train the MM-Eureka-Qwen-7B and MM-Eureka-Qwen-32B, which are the almost top performer in multimodal reasoning within similar size open-source models. Especially for Multidisciplinary K12 tasks.
 
 🔥We open-source our complete pipeline to foster further research in this area. We release all our codes, models, data, etc. at [MM-EUREKA-Qwen](https://github.com/ModalMinds/MM-EUREKA/tree/qwen).
 
 ## 🗞️ News
 
 - **[2025/04/15]** We released `MM-Eureka-Qwen-7B` , `MM-Eureka-Qwen-32B` and `MMK12`.
-  - 📖 Report: [MM-Eureka-Qwen-Report](https://github.com/ModalMinds/MM-EUREKA/blob/qwen/MM_EUREKA_Tech_Report.pdf) 
+  - 📖 Report: [MM-Eureka-Qwen-Report](https://github.com/ModalMinds/MM-EUREKA/blob/qwen/MM_EUREKA_Tech_Report.pdf)
   - 🤗 Model: [MM-Eureka-Qwen-7B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B)
   - 🤗 Model: [MM-Eureka-Qwen-32B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-32B)
   - 📊 Dataset: [MMK12](https://huggingface.co/datasets/FanqingM/MMK12)
   - 🚀Code: [MM-Eureka-Qwen-Code](https://github.com/ModalMinds/MM-EUREKA/tree/qwen)
 
 - **[2025/03/27]** We released `MM-Eureka-Qwen`.
-  - 📖 Report: [MM-Eureka-Qwen-Report](https://jagged-court-d9d.notion.site/MM-Eureka-Qwen-1c13cc5a384880ffbd2de24e1dee052d) 
+  - 📖 Report: [MM-Eureka-Qwen-Report](https://jagged-court-d9d.notion.site/MM-Eureka-Qwen-1c13cc5a384880ffbd2de24e1dee052d)
   - 🤗 Model: [MM-Eureka-Qwen-7B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B)
   - 📊 Dataset: [MM-Eureka-Dataset](https://huggingface.co/datasets/FanqingM/MM-Eureka-Dataset)
   - 🚀Code: [MM-Eureka-Qwen-Code](https://github.com/ModalMinds/MM-EUREKA/tree/qwen)
@@ -89,13 +89,23 @@ Based on the key factors identified by https://github.com/ModalMinds/MM-EUREKA f
 
 Finally, MM-EUREKA-Qwen achieves 73.0 on MathVista, surpassing the original Qwen2.5-VL-7B-Instruct by 4.8%.
 
-|                             | Base Model                 | MathVista       | MathVerse       | MathVision | OlympidBench  | K12              |
-| --------------------------- | -------------------------- | --------------- | --------------- | ------- | ------------- | ---------------- |
-| Qwen2.5-VL-7B-Instruct      | -                          | 68.2            | 47.9            | 25.4    | 15.3          | 36.0             |
-| InternVL2.5-VL-8B-Instruct  | -                          | 64.4            | 39.5            | 19.7    | 8.0           | 24.8             |
-| InternVL2.5-VL-38B-Instruct | -                          | 71.9            | 49.4            | 31.8    | 29.3          | 37.2             |
-| MM-EUREKA-InternVL-8B       | InternVL2.5-VL-7B-Instruct | 67.1            | 40.4            | 22.2    | 8.6           | 27.0             |
-| MM-EUREKA-Qwen-7B           | Qwen2.5-VL-7B-Instruct     | **73.0 (+4.8)** | **50.3 (+2.4)** | 26.9 (+1.5) | 25.3（+10.0） | **48.6 (+12.6)** |
+| Model                     | MathVista | MathVerse | MathVision | OlympiadBench | WeMath | MMK12 |
+|---------------------------|-----------|-----------|------------|---------------|--------|-------|
+| Claude3.7-Sonnet          | 66.8      | 52.0      | 41.3       | 48.9          | 72.6   | 55.3  |
+| GPT-4o                    | 63.8      | 50.2      | 30.4       | 35.0          | 68.8   | 49.9  |
+| o1                        | 73.9      | 57.0      | 60.3       | 68.0          | 98.7   | 73.9  |
+| Gemini2-flash             | 70.4      | 59.3      | 41.3       | 51.0          | 71.4   | 65.2  |
+| Qwen-2.5-VL-7B            | 68.2      | 47.9      | 25.4       | 20.2          | 62.1   | 53.6  |
+| Qwen-2.5-VL-32B           | 74.7/71.7 | 49.9      | **40.1**       | 30.0          | 69.1   | 66.8  |
+| Qwen-2.5-VL-72B           | **74.8**      | **57.6**      | 38.1       | **40.4**          | 72.4   | 70.5  |
+| InternVL2.5-VL-78B        | 72.3      | 51.7      | 32.2       | 31.1          | 66.3   | 61.6  |
+| QVQ-72B-Preview           | 71.4      | 48.2      | 35.9       | 33.2          | 65.4   | 61.5  |
+| Adora-7B                  | 73.5      | 50.1      | 23.0       | 20.1          | 64.2   | 58.1  |
+| R1-Onevision-7B           | 64.1      | 47.1      | 29.9/23.5  | 17.3          | 61.8   | 39.8  |
+| MM-Eureka-7B              | 73.0      | 50.3      | 26.9       | 20.1          | 66.1   | 64.5  |
+| MM-Eureka-32B             | **74.8**      | 56.5      | 34.4       | 35.9          | **73.4**   | **72.2**  |
+
+
 
 - 🤗 [MM-Eureka-Qwen-7B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B)
 - 🤗 [MM-Eureka-Qwen-32B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-32B)
@@ -120,7 +130,7 @@ Once downloaded, refer to the section below for additional data formation.
 
 #### Custom dataset
 
-For custom dataset, format your data in to a JSONL file,  where each entry is a dictionary organized in the following format. 
+For custom dataset, format your data in to a JSONL file, where each entry is a dictionary organized in the following format.
 
 ```json
 {
@@ -154,7 +164,7 @@ Before starting your own training, ensure that the paths in the provided trainin
 
 ## 🤝 Contribution
 
-MM-Eureka is stil under active development, if you want to contribute, please feel free to make a pull request or create an issue.
+MM-Eureka is still under active development, if you want to contribute, please feel free to make a pull request or create an issue.
 
 Please refer to `CONTRIBUTING.md` before you dive in！
 
@@ -179,3 +189,4 @@ We acknowledge the outstanding open-source contributions from [OpenRLHF](https:/
   year={2025}
 }
 ```
+
