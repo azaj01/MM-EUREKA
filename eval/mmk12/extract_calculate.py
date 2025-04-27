@@ -31,7 +31,7 @@ def get_chat_response(prompt, model="gpt-4o", max_token=256, retry=5):
 def build_zh_exam_k12_gpt4_prompt(question_data):
     prompt = """You are given a question, the correct answer and a model's answer. Please determine if the model's answer matches the correct answer.
 Focus only on the mathematical or semantic correctness of the content. Ignore any differences in formatting, such as LaTeX syntax, symbols, styles, or additional wrappers (e.g., \\boxed, $...$, or similar). Compare only the core mathematical or textual meaning of the model's answer and the correct answer.
-Only the correctness of the model's answer matters.
+The process or reasoning leading to the Solution is irrelevant, Only the correctness of the model's answer matters.
 Return only "Yes" if the model's answer is correct or "No" if it is incorrect.
 Only return "Yes" or "No" with no additional text or formatting.
 
