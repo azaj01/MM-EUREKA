@@ -20,7 +20,7 @@
 
 <hr>
 <div align="center">
-<p style="text-align: center;">MM-EUREKA: EXPLORING THE FRONTIERS OF MULTIMODAL REASONING WITH RULE-BASED REINFORCEMENT LEARNING<p>
+<p style="text-align: center;">MM-EUREKA: Exploring the Frontiers of Multimodal Reasoning with Rule-based Reinforcement Learning<p>
 </div>
 <hr>
 <div align="center">
