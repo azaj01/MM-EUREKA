@@ -29,6 +29,12 @@ english_answer_type_dict = {
 }
 
 
+def make_input(prompt, question_content):
+    # diversified based on the vllm, which is not implemented temporarily
+    input = prompt + "\n" + question_content
+    return input
+
+
 def build_prompt(data_item):
     is_math = "maths" in data_item["source"]
     subject_content = "Math" if is_math else "Physics"
@@ -48,6 +54,14 @@ def build_prompt(data_item):
         'used in the solution process and results. Please end your solution with "So the final answer '
         f'is {multiple_answer_text}." and give the result explicitly{unit_text}.'
     )
+    if is_math:
+        input = make_input(prompt, data_item["question"])
+    else:
+        if "context" in data_item.keys() and str(data_item["context"]) != "nan":  # cannot be null
+            input = make_input(prompt, data_item["context"] + "\n" + data_item["question"])
+        else:
+            input = make_input(prompt, data_item["question"])
+    return input
 
 
 def get_answer_type_text(answer_type, multiple_answer):
