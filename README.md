@@ -24,7 +24,16 @@
 </div>
 <hr>
 <div align="center">
-<a href="https://github.com/ModalMinds/MM-EUREKA/blob/qwen/MM_EUREKA_Tech_Report.pdf">[[Report Link]]</a>
+<a href="https://github.com/ModalMinds/MM-EUREKA/blob/qwen/MM_EUREKA_Tech_Report.pdf">[MM-Eureka Report Link]</a>
+</div>
+
+<hr>
+<div align="center">
+<p style="text-align: center;">CPGD: Toward Stable Rule-based Reinforcement Learning for Language Models<p>
+</div>
+<hr>
+<div align="center">
+<a href="https://github.com/ModalMinds/MM-EUREKA/blob/qwen/CPGD_Tech_Report.pdf">[CPGD Report Link]</a>
 </div>
 
 
