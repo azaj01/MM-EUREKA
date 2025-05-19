@@ -130,7 +130,7 @@ class PPOTrainer(ABC):
         self.actor_scheduler = actor_scheduler
         self.critic_scheduler = critic_scheduler
 
-        self.actor_loss_fn = PolicyLoss(eps_clip, self.args.use_dapo)
+        self.actor_loss_fn = PolicyLoss(eps_clip, use_dapo=self.args.use_dapo, use_cpg_loss=self.args.use_cpg_loss)
         self.critic_loss_fn = ValueLoss(value_clip)
         self.ptx_loss_fn = GPTLMLoss()
 
@@ -460,6 +460,12 @@ class PPOTrainer(ABC):
             experience.info["kl"] = kl_loss.item()
         else:
             kl_loss = 0
+        
+        # compute policy drift from CPGD
+        if self.args.use_policy_drift:
+            policy_drift = ((action_log_probs.detach() - old_action_log_probs).exp() - 1.0).clamp(max=self.args.policy_drift_clip_eps) * action_log_probs
+            policy_drift_loss = (policy_drift * experience.action_mask).sum() / experience.action_mask.sum()
+            actor_loss += policy_drift_loss * self.args.policy_drift_coef
 
         # mixtral
         if self.aux_loss:

@@ -469,6 +469,8 @@ class NaiveExperienceMaker(ABC):
             response_lengths = torch.cat([experience.info["response_length"] for experience in experiences])
             response_lengths = response_lengths.reshape(-1, args.n_samples_per_prompt).to(device="cuda")
             weights = weight_func(rewards, response_lengths, args.adora_lamda)
+        elif args.use_clip_filter_like_weight:
+            weights = clip_filter_like_weight_func(rewards, args.clip_filter_like_weight_clip_eps)
         else:
             weights = torch.ones_like(rewards, device=rewards.device)
 
@@ -1071,5 +1073,17 @@ def weight_func(rewards, response_length, lamda=0.1):
             pass
         else:
             weights[i] = lamda
+
+    return weights
+
+def clip_filter_like_weight_func(rewards, clip_filter_like_weight_clip_eps=3.0, lamda=1.0):
+    """   
+    rewards = [bs, n_sample]
+    """
+    online_filter_mask = (rewards.std(-1, keepdim=True) == 0.0)
+    if online_filter_mask.sum() == rewards.size(0):
+        return torch.ones_like(rewards, device=rewards.device)
+    weights = torch.ones_like(rewards, device=rewards.device) * (rewards.size(0) / (rewards.size(0) - online_filter_mask.sum())).clamp(max=clip_filter_like_weight_clip_eps)
+    weights[online_filter_mask.repeat(1, rewards.size(-1))] = lamda
 
     return weights

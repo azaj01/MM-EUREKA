@@ -43,6 +43,11 @@ We present **MM-Eureka-Qwen-7B** and **MM-Eureka-Qwen-32B**, both are powerful m
 
 ## 🗞️ News
 
+- **[2025/05/19]** We proposed a novel RL algorithm called `Clipped Policy Gradient Optimization with Policy Drift (CPGD)`, which is based on policy gradient loss with a clipping mechanism and a policy drift regularizer. In our experiments, we found that it is more stable and performs better than GRPO. 
+  - 📖 Report: [CPGD-Report](https://github.com/ModalMinds/MM-EUREKA/blob/qwen/CPGD_Tech_Report.pdf)
+  - 🤗 Model: [MM-Eureka-CPGD-Qwen-7B](https://huggingface.co/Zkkkai/CPGD-7B)
+  - 🚀Code: [MM-Eureka-Qwen-Code](https://github.com/ModalMinds/MM-EUREKA/tree/qwen)
+
 - **[2025/04/15]** We released `MM-Eureka-Qwen-7B` , `MM-Eureka-Qwen-32B` and `MMK12`.
   - 📖 Report: [MM-Eureka-Qwen-Report](https://github.com/ModalMinds/MM-EUREKA/blob/qwen/MM_EUREKA_Tech_Report.pdf)
   - 🤗 Model: [MM-Eureka-Qwen-7B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B)
@@ -75,6 +80,11 @@ This repository is built upon [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF), 
   - Use `--enable_accuracy_filter`, `--freezing_filter_steps`, `--accuracy_lower_bound`, `--accuracy_upper_bound` to control the behavior of online accuracy filter.
 - **ADORA**: Enable Adaptive Online Rollout Adjustment by using `--use_adora` and `--adora_lamda` as in [ADORA](https://five-stetson-b51.notion.site/Training-Reasoning-Model-with-Dynamic-Advantage-Estimation-on-Reinforcement-Learning-1a830cc0904681fa9df3e076b6557a3e).
 - **DAPO**: You can use `--use_dapo` to enable DAPO loss during training as in [DAPO](https://arxiv.org/abs/2503.14476).
+- **CPGD**: You can use `--use_cpg_loss` and `--use_policy_drift` to enable CPGD loss during training as in [CPGD](https://github.com/ModalMinds/MM-EUREKA/blob/qwen/CPGD_Tech_Report.pdf). Additionally: 
+  - `--policy_drift_coef` controls the weight of the policy drift regularizer, and `--policy_drift_clip_eps` controls the clipping range in policy drift.
+  - `--use_clip_filter_like_weight` enables the clip-filter-like weight proposed in [CPGD](https://github.com/ModalMinds/MM-EUREKA/blob/qwen/CPGD_Tech_Report.pdf), and `--clip_filter_like_weight_clip_eps` controls the clipping range in the clip-filter-like weight.
+  - Example script is provided in `MM-EUREKA/examples/scripts/train_cpgd_qwen_7b_single_node.sh` or `MM-EUREKA/examples/scripts/train_cpgd_qwen_7b_multi_node.sh`. 
+
 
 
 ## 🤖 Models
@@ -102,11 +112,13 @@ Based on the key factors identified by https://github.com/ModalMinds/MM-EUREKA f
 | R1-Onevision-7B        | 64.1      | 47.1      | 29.9/23.5  | 17.3          | 61.8   | 39.8  |
 | **MM-Eureka-Qwen-7B**  | 73.0      | 50.3      | 26.9       | 20.1          | 66.1   | 64.5  |
 | **MM-Eureka-Qwen-32B** | **74.8**      | 56.5      | 34.4       | 35.9          | **73.4**   | **72.2**  |
+| **MM-Eureka-CPGD-Qwen-7B**  | 74.0      | 50.6      | 28.3       | 21.4          | 68.3   | 65.3  |
 
 
 
 - 🤗 [MM-Eureka-Qwen-7B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-7B)
 - 🤗 [MM-Eureka-Qwen-32B](https://huggingface.co/FanqingM/MM-Eureka-Qwen-32B)
+- 🤗 [MM-Eureka-CPGD-Qwen-7B](https://huggingface.co/Zkkkai/CPGD-7B)
 
 ## 🏁 Getting Started
 

@@ -356,6 +356,13 @@ if __name__ == "__main__":
         help="Choose advantage estimation method: gae, reinforce, rloo, reinforce_baseline, group_norm",
     )
     parser.add_argument("--use_kl_loss", action="store_true", default=False, help="whether to use KL loss from GRPO")
+    # CPGD
+    parser.add_argument("--use_cpg_loss", action="store_true", default=False, help="whether to use the clipped policy gradient loss from CPGD")
+    parser.add_argument("--use_policy_drift", action="store_true", default=False, help="whether to use the policy drift from CPGD")
+    parser.add_argument("--policy_drift_coef", type=float, default=0.01)
+    parser.add_argument("--policy_drift_clip_eps", type=float, default=2.0)
+    parser.add_argument("--use_clip_filter_like_weight", action="store_true", default=False, help="whether to use the clip-filter-like weighting factor from CPGD")
+    parser.add_argument("--clip_filter_like_weight_clip_eps", type=float, default=3.0)
 
     # Context Parallel
     parser.add_argument("--ring_attn_size", type=int, default=1, help="Ring attention group size")
