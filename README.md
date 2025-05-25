@@ -207,5 +207,24 @@ We acknowledge the outstanding open-source contributions from [OpenRLHF](https:/
   journal={arXiv preprint arXiv:2503.07365},
   year={2025}
 }
+
+
+@article{liu2025cpgd,
+  title={CPGD: Toward Stable Rule-based Reinforcement Learning for Language Models},
+  author={Liu, Zongkai and Meng, Fanqing and Du, Lingxiao and Zhou, Zhixiang and Yu, Chao and Shao, Wenqi and Zhang, Qiaosheng},
+  journal={arXiv preprint arXiv:2505.12504},
+  year={2025}
+}
+
+
+@article{du2025mm,
+  title={MM-PRM: Enhancing Multimodal Mathematical Reasoning with Scalable Step-Level Supervision},
+  author={Du, Lingxiao and Meng, Fanqing and Liu, Zongkai and Zhou, Zhixiang and Luo, Ping and Zhang, Qiaosheng and Shao, Wenqi},
+  journal={arXiv preprint arXiv:2505.13427},
+  year={2025}
+}
+
+
+
 ```
 
