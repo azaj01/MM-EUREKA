@@ -45,7 +45,7 @@
 </div>
 <hr>
 <div align="center">
-<a href="https://github.com/ModalMinds/MM-EUREKA/tree/mm-prm">[MM-PRM Code]</a>, <a href="https://arxiv.org/pdf/2505.13427">[MM-PRM arxiv Link]</a>
+<a href="https://github.com/ModalMinds/MM-EUREKA/tree/mm-prm">[MM-PRM Code]</a>, <a href="https://arxiv.org/abs/2505.13427">[MM-PRM arxiv Link]</a>
 </div>
 
 
