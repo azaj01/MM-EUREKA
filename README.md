@@ -36,6 +36,18 @@
 <a href="https://github.com/ModalMinds/MM-EUREKA/blob/qwen/CPGD_Tech_Report.pdf">[CPGD Report Link]</a>, <a href="https://arxiv.org/abs/2505.12504">[CPGD arxiv Link]</a>
 </div>
 
+<hr>
+<div align="center">
+<p style="text-align: center;">MM-PRM: Enhancing Multimodal Mathematical Reasoning with Scalable Step-Level Supervision
+
+
+<p>
+</div>
+<hr>
+<div align="center">
+<a href="https://github.com/ModalMinds/MM-EUREKA/tree/mm-prm">[MM-PRM Code]</a>, <a href="https://arxiv.org/pdf/2505.13427">[MM-PRM arxiv Link]</a>
+</div>
+
 
 
 ## 🎯Overview
@@ -51,6 +63,11 @@ We present **MM-Eureka-Qwen-7B** and **MM-Eureka-Qwen-32B**, both are powerful m
 🔥We open-source our complete pipeline to foster further research in this area. We release all our codes, models, data, etc. at [MM-EUREKA-Qwen](https://github.com/ModalMinds/MM-EUREKA/tree/qwen).
 
 ## 🗞️ News
+
+- **[2025/05/19]** We released `MM-PRM`.
+  - 📖 Report: [MM-PRM-Report](https://arxiv.org/abs/2505.13427)
+  - 🤗 Model: [MM-PRM](https://huggingface.co/Cierra0506/MM-PRM)
+  - 🚀Code: [MM-PRM-Code](https://github.com/ModalMinds/MM-EUREKA/tree/mm-prm)
 
 - **[2025/05/19]** We proposed a novel RL algorithm called `Clipped Policy Gradient Optimization with Policy Drift (CPGD)`, which is based on policy gradient loss with a clipping mechanism and a policy drift regularizer. In our experiments, we found that it is more stable and performs better than GRPO. 
   - 📖 Report: [CPGD-Report](https://github.com/ModalMinds/MM-EUREKA/blob/qwen/CPGD_Tech_Report.pdf), [CPGD-arxiv](https://arxiv.org/abs/2505.12504)
@@ -201,30 +218,23 @@ We acknowledge the outstanding open-source contributions from [OpenRLHF](https:/
 
 ## 📜 Citation
 ```
-@article{meng2025mm,
-  title={MM-Eureka: Exploring Visual Aha Moment with Rule-based Large-scale Reinforcement Learning},
-  author={Meng, Fanqing and Du, Lingxiao and Liu, Zongkai and Zhou, Zhixiang and Lu, Quanfeng and Fu, Daocheng and Shi, Botian and Wang, Wenhai and He, Junjun and Zhang, Kaipeng and others},
-  journal={arXiv preprint arXiv:2503.07365},
-  year={2025}
+@article{du2025mmprm,
+      title={MM-PRM: Enhancing Multimodal Mathematical Reasoning with Scalable Step-Level Supervision},
+      author={Lingxiao Du and Fanqing Meng and Zongkai Liu and Zhixiang Zhou and Ping Luo and Qiaosheng Zhang and Wenqi Shao},
+      year={2025},
+      journal={arXiv preprint arXiv:2505.13427},
 }
-
-
+@article{meng2025mmeureka,
+      title={MM-Eureka: Exploring the Frontiers of Multimodal Reasoning with Rule-based Reinforcement Learning},
+      author={Fanqing Meng and Lingxiao Du and Zongkai Liu and Zhixiang Zhou and Quanfeng Lu and Daocheng Fu and Tiancheng Han and Botian Shi and Wenhai Wang and Junjun He and Kaipeng Zhang and Ping Luo and Yu Qiao and Qiaosheng Zhang and Wenqi Shao},
+      year={2025},
+      journal={arXiv preprint arXiv:2503.07365},
+}
 @article{liu2025cpgd,
-  title={CPGD: Toward Stable Rule-based Reinforcement Learning for Language Models},
-  author={Liu, Zongkai and Meng, Fanqing and Du, Lingxiao and Zhou, Zhixiang and Yu, Chao and Shao, Wenqi and Zhang, Qiaosheng},
-  journal={arXiv preprint arXiv:2505.12504},
-  year={2025}
+      title={CPGD: Toward Stable Rule-based Reinforcement Learning for Language Models},
+      author={Zongkai Liu and Fanqing Meng and Lingxiao Du and Zhixiang Zhou and Chao Yu and Wenqi Shao and Qiaosheng Zhang},
+      year={2025},
+      journal={arXiv preprint arXiv:2505.12504},
 }
-
-
-@article{du2025mm,
-  title={MM-PRM: Enhancing Multimodal Mathematical Reasoning with Scalable Step-Level Supervision},
-  author={Du, Lingxiao and Meng, Fanqing and Liu, Zongkai and Zhou, Zhixiang and Luo, Ping and Zhang, Qiaosheng and Shao, Wenqi},
-  journal={arXiv preprint arXiv:2505.13427},
-  year={2025}
-}
-
-
-
 ```
 
