@@ -218,17 +218,17 @@ We acknowledge the outstanding open-source contributions from [OpenRLHF](https:/
 
 ## 📜 Citation
 ```
-@article{du2025mmprm,
-      title={MM-PRM: Enhancing Multimodal Mathematical Reasoning with Scalable Step-Level Supervision},
-      author={Lingxiao Du and Fanqing Meng and Zongkai Liu and Zhixiang Zhou and Ping Luo and Qiaosheng Zhang and Wenqi Shao},
-      year={2025},
-      journal={arXiv preprint arXiv:2505.13427},
-}
 @article{meng2025mmeureka,
       title={MM-Eureka: Exploring the Frontiers of Multimodal Reasoning with Rule-based Reinforcement Learning},
       author={Fanqing Meng and Lingxiao Du and Zongkai Liu and Zhixiang Zhou and Quanfeng Lu and Daocheng Fu and Tiancheng Han and Botian Shi and Wenhai Wang and Junjun He and Kaipeng Zhang and Ping Luo and Yu Qiao and Qiaosheng Zhang and Wenqi Shao},
       year={2025},
       journal={arXiv preprint arXiv:2503.07365},
+}
+@article{du2025mmprm,
+      title={MM-PRM: Enhancing Multimodal Mathematical Reasoning with Scalable Step-Level Supervision},
+      author={Lingxiao Du and Fanqing Meng and Zongkai Liu and Zhixiang Zhou and Ping Luo and Qiaosheng Zhang and Wenqi Shao},
+      year={2025},
+      journal={arXiv preprint arXiv:2505.13427},
 }
 @article{liu2025cpgd,
       title={CPGD: Toward Stable Rule-based Reinforcement Learning for Language Models},
