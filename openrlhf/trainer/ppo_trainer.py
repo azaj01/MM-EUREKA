@@ -262,23 +262,24 @@ class PPOTrainer(ABC):
                     status = {}
 
                 ## log acc change
-                accuracy_ = torch.cat([experience.info["accuracy_rewards"] for experience in experiences])
-                accuracy_ = accuracy_.reshape(-1, args.n_samples_per_prompt).to(device="cuda")
-                accuracy_ = torch.mean(accuracy_, dim=-1)
-                accuracy_counts = sorted(Counter(accuracy_.tolist()).items())
-                hard_counts = accuracy_counts[0][-1]
-                easy_counts = accuracy_counts[-1][-1]
-                mid_counts = sum(acc[-1] for acc in accuracy_counts[1:-1])
-                status["hard_counts"] = hard_counts
-                status["easy_counts"] = easy_counts
-                status["mid_counts"] = mid_counts
-                print("=== Accuracy distribution ===:", " ".join(f"{k:.2f}:{v}" for k, v in accuracy_counts))
+                if experiences:
+                    accuracy_ = torch.cat([experience.info["accuracy_rewards"] for experience in experiences])
+                    accuracy_ = accuracy_.reshape(-1, args.n_samples_per_prompt).to(device="cuda")
+                    accuracy_ = torch.mean(accuracy_, dim=-1)
+                    accuracy_counts = sorted(Counter(accuracy_.tolist()).items())
+                    hard_counts = accuracy_counts[0][-1]
+                    easy_counts = accuracy_counts[-1][-1]
+                    mid_counts = sum(acc[-1] for acc in accuracy_counts[1:-1])
+                    status["hard_counts"] = hard_counts
+                    status["easy_counts"] = easy_counts
+                    status["mid_counts"] = mid_counts
+                    print("=== Accuracy distribution ===:", " ".join(f"{k:.2f}:{v}" for k, v in accuracy_counts))
 
-                ## log the entropy for a group of responses
-                joint_action_log_probs_ = torch.cat(
-                    [(experience.action_log_probs * experience.action_mask).sum(-1) for experience in experiences]
-                )
-                status["entropy_per_prompt"] = -joint_action_log_probs_.mean().item()
+                    ## log the entropy for a group of responses
+                    joint_action_log_probs_ = torch.cat(
+                        [(experience.action_log_probs * experience.action_mask).sum(-1) for experience in experiences]
+                    )
+                    status["entropy_per_prompt"] = -joint_action_log_probs_.mean().item()
 
                 status["accuracy_rewards_original"] = accuracy_rewards_original
 
@@ -460,10 +461,12 @@ class PPOTrainer(ABC):
             experience.info["kl"] = kl_loss.item()
         else:
             kl_loss = 0
-        
+
         # compute policy drift from CPGD
         if self.args.use_policy_drift:
-            policy_drift = ((action_log_probs.detach() - old_action_log_probs).exp() - 1.0).clamp(max=self.args.policy_drift_clip_eps) * action_log_probs
+            policy_drift = ((action_log_probs.detach() - old_action_log_probs).exp() - 1.0).clamp(
+                max=self.args.policy_drift_clip_eps
+            ) * action_log_probs
             policy_drift_loss = (policy_drift * experience.action_mask).sum() / experience.action_mask.sum()
             actor_loss += policy_drift_loss * self.args.policy_drift_coef
 
